@@ -504,44 +504,64 @@ respaldar_rice_kinetic() {
 }
 
 restaurar_rice_kinetic() {
-    echo -e "\n${AMARILLO}[+] Preparando la restauración del Rice...${NC}"
+    echo -e "\n${AMARILLO}[+] Preparando la restauración inteligente del Rice...${NC}"
     Ruta_Backup="$HOME/Copias_Seguridad_Rice"
+    
+    # Obtener el directorio actual donde se está ejecutando este script
+    Ruta_Actual="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    Ruta_Busqueda=""
 
-    if [ ! -d "$Ruta_Backup" ] || [ -z "$(ls -A "$Ruta_Backup"/*.tar.gz 2>/dev/null)" ]; then
-        echo -e "${ROJO}❌ Error: No se ha encontrado ninguna copia de seguridad en $Ruta_Backup${NC}"
+    # 1. COMPROBACIÓN INTELIGENTE DE RUTAS
+    if [ -d "$Ruta_Backup" ] && [ -n "$(ls -A "$Ruta_Backup"/rice_kineticos_*.tar.gz 2>/dev/null)" ]; then
+        echo -e "${VERDE}✔ Carpeta oficial detectada en el Home.${NC}"
+        Ruta_Busqueda="$Ruta_Backup"
+    elif [ -n "$(ls -A "$Ruta_Actual"/rice_kineticos_*.tar.gz 2>/dev/null)" ]; then
+        echo -e "${AMARILLO}[!] Carpeta oficial vacía o inexistente. Usando directorio de ejecución actual:${NC}"
+        echo -e "    $Ruta_Actual"
+        Ruta_Busqueda="$Ruta_Actual"
+    else
+        echo -e "${ROJO}❌ Error: No se ha encontrado ninguna copia ('rice_kineticos_*.tar.gz')${NC}"
+        echo -e "   ni en $Ruta_Backup ni en la carpeta actual."
         pausar
         return 1
     fi
 
-    echo -e "${AZUL}-> Copias de seguridad detectadas:${NC}"
+    # 2. SELECCIÓN AUTOMÁTICA DEL ARCHIVO MÁS RECIENTE
+    # Ordenamos por fecha de modificación (-t) y nos quedamos con el primero (head -n 1)
+    Archivo_Mas_Reciente=$(ls -t "$Ruta_Busqueda"/rice_kineticos_*.tar.gz 2>/dev/null | head -n 1)
+    Nombre_Base_Archivo=$(basename "$Archivo_Mas_Reciente")
+
+    echo -e "\n${AZUL}-> Copia de seguridad más reciente detectada:${NC}"
     echo "-------------------------------------------------------"
-    ls -1 "$Ruta_Backup"/*.tar.gz | xargs -n 1 basename
+    echo -e "📦 $Nombre_Base_Archivo"
     echo "-------------------------------------------------------"
-    echo -e "${AMARILLO}Escribe o copia el nombre exacto del archivo que quieres restaurar:${NC}"
-    read -p "Nombre del archivo: " nombre_archivo
+    
+    read -p "¿Deseas restaurar este archivo específico? [s/N]: " confirmar
+    if [[ ! "$confirmar" =~ ^[Ss]$ ]]; then
+        echo -e "${AMARILLO}Restauración cancelada por el usuario.${NC}"
+        pausar
+        return 0
+    fi
 
-    Archivo_Seleccionado="$Ruta_Backup/$nombre_archivo"
+    # 3. APLICAR LIMPIEZA Y EXTRACCIÓN SEGURA
+    echo -e "\n${AZUL}-> Purgando entornos antiguos de usuario...${NC}"
+    rm -rf "$HOME/.config/kineticwe" \
+           "$HOME/.config/noctalia" \
+           "$HOME/.config/noctalia-kwe" \
+           "$HOME/.config/noctalia-greeter-kwe" \
+           "$HOME/.config/noctalia-greeter" \
+           "$HOME/.config/niri" \
+           "$HOME/.local/state/noctalia" \
+           "$HOME/.local/state/noctalia-kwe"
 
-    if [ -f "$Archivo_Seleccionado" ] && [[ "$nombre_archivo" == *.tar.gz ]]; then
-        echo -e "\n${AZUL}-> Limpiando entornos locales y aplicando restauración total...${NC}"
+    echo -e "${AZUL}-> Extrayendo archivos en tu zona personal ($HOME)...${NC}"
+    tar -xzf "$Archivo_Mas_Reciente" -C "$HOME/"
 
-        # Borrado preventivo exhaustivo tanto de configs como del estado persistente real de Don
-        rm -rf "$HOME/.config/kineticwe" \
-               "$HOME/.config/noctalia" \
-               "$HOME/.config/noctalia-kwe" \
-               "$HOME/.config/noctalia-greeter-kwe" \
-               "$HOME/.config/noctalia-greeter" \
-               "$HOME/.config/niri" \
-               "$HOME/.local/state/noctalia" \
-               "$HOME/.local/state/noctalia-kwe"
-
-        # Extracción limpia y directa apuntando directamente a tu $HOME
-        tar -xzf "$Archivo_Seleccionado" -C "$HOME/"
-
-        echo -e "\n${VERDE}✔ ¡Tu personalización, plugins y estados de la GUI han sido restaurados por completo!${NC}"
-        echo -e "${AMARILLO}Recuerda reiniciar o cerrar sesión para aplicar tu Rice restaurado.${NC}"
+    if [ $? -eq 0 ]; then
+        echo -e "\n${VERDE}✔ ¡Tu personalización, plugins y configuraciones han sido restaurados con éxito!${NC}"
+        echo -e "${AMARILLO}Recuerda reiniciar o cerrar sesión para cargar tu entorno restaurado.${NC}"
     else
-        echo -e "\n${ROJO}❌ Error: El nombre de archivo no es válido o el archivo no existe.${NC}"
+        echo -e "\n${ROJO}❌ Error: Falló la extracción del archivo tar.gz.${NC}"
     fi
 
     pausar
