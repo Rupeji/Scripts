@@ -1,1 +1,1 @@
-rpm-ostree rebase ostree-unverified-registry:docker://ghcr.io/rupeji/bazzite-kinetic:latest
+rpm-ostree rebase oci:docker://ghcr.io/rupeji/bazzite-kinetic:latest
