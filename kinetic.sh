@@ -461,7 +461,7 @@ actualizar_sistema_kineticos() {
 # MÓDULO 8: COPIA DE SEGURIDAD INTEGRAL
 # ==============================================================================
 respaldar_rice_kinetic() {
-    echo -e "\n${AMARILLO}[+] Iniciando copia de seguridad de tu personalización (Rice y Firefox)...${NC}"
+    echo -e "\n${AMARILLO}[+] Iniciando copia de seguridad de tu personalización (Rice)...${NC}"
 
     Ruta_Backup="$HOME/Copias_Seguridad_Rice"
     mkdir -p "$Ruta_Backup"
@@ -484,9 +484,6 @@ respaldar_rice_kinetic() {
         [ -d ".local/state/noctalia" ] && RUTAS_A_COPIAR="$RUTAS_A_COPIAR .local/state/noctalia"
         [ -d ".local/state/noctalia-kwe" ] && RUTAS_A_COPIAR="$RUTAS_A_COPIAR .local/state/noctalia-kwe"
 
-        # 3. Perfil completo de Firefox si existe
-        [ -d ".mozilla/firefox" ] && RUTAS_A_COPIAR="$RUTAS_A_COPIAR .mozilla/firefox"
-
         echo -e "${AZUL}-> Empaquetando componentes detectados: $RUTAS_A_COPIAR...${NC}"
         tar -czf "$Archivo_Backup" $RUTAS_A_COPIAR 2>/dev/null
 
@@ -498,6 +495,69 @@ respaldar_rice_kinetic() {
         fi
     else
         echo -e "\n${ROJO}❌ Error: No se encontró la carpeta 'kineticwe' en ~/.config.${NC}"
+    fi
+
+    pausar
+}
+
+# ==============================================================================
+# MÓDULO 9: RESTAURACIÓN INTELIGENTE Y AUTÓNOMA
+# ==============================================================================
+restaurar_rice_kinetic() {
+    echo -e "\n${AMARILLO}[+] Preparando la restauración inteligente del entorno...${NC}"
+    Ruta_Backup="$HOME/Copias_Seguridad_Rice"
+    
+    Ruta_Actual="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    Ruta_Busqueda=""
+
+    # 1. Comprobación de rutas en cascada
+    if [ -d "$Ruta_Backup" ] && [ -n "$(ls -A "$Ruta_Backup"/rice_kineticos_*.tar.gz 2>/dev/null)" ]; then
+        echo -e "${VERDE}✔ Carpeta oficial detectada en el Home.${NC}"
+        Ruta_Busqueda="$Ruta_Backup"
+    elif [ -n "$(ls -A "$Ruta_Actual"/rice_kineticos_*.tar.gz 2>/dev/null)" ]; then
+        echo -e "${AMARILLO}[!] Carpeta oficial vacía o inexistente. Usando directorio de ejecución actual:${NC}"
+        echo -e "    $Ruta_Actual"
+        Ruta_Busqueda="$Ruta_Actual"
+    else
+        echo -e "${ROJO}❌ Error: No se ha encontrado ninguna copia ('rice_kineticos_*.tar.gz')${NC}"
+        pausar
+        return 1
+    fi
+
+    # 2. Selección automática del archivo más reciente
+    Archivo_Mas_Reciente=$(ls -t "$Ruta_Busqueda"/rice_kineticos_*.tar.gz 2>/dev/null | head -n 1)
+    Nombre_Base_Archivo=$(basename "$Archivo_Mas_Reciente")
+
+    echo -e "\n${AZUL}-> Copia de seguridad más reciente detectada:${NC}"
+    echo "-------------------------------------------------------"
+    echo "📦 $Nombre_Base_Archivo"
+    echo "-------------------------------------------------------"
+    
+    read -p "¿Deseas restaurar este archivo específico? [s/N]: " confirmar
+    if [[ ! "$confirmar" =~ ^[Ss]$ ]]; then
+        echo -e "${AMARILLO}Restauración cancelada por el usuario.${NC}"
+        pausar
+        return 0
+    fi
+
+    echo -e "\n${AZUL}-> Purgando entornos antiguos (Noctalia y KineticWE)...${NC}"
+    rm -rf "$HOME/.config/kineticwe" \
+           "$HOME/.config/noctalia" \
+           "$HOME/.config/noctalia-kwe" \
+           "$HOME/.config/noctalia-greeter-kwe" \
+           "$HOME/.config/noctalia-greeter" \
+           "$HOME/.config/niri" \
+           "$HOME/.local/state/noctalia" \
+           "$HOME/.local/state/noctalia-kwe"
+
+    echo -e "${AZUL}-> Extrayendo archivos en tu zona personal ($HOME)...${NC}"
+    tar -xzf "$Archivo_Mas_Reciente" -C "$HOME/"
+
+    if [ $? -eq 0 ]; then
+        echo -e "\n${VERDE}✔ ¡Tu personalización de KineticWE y Noctalia ha sido restaurada con éxito!${NC}"
+        echo -e "${AMARILLO}¡Listo! Ya puedes reiniciar sesión para disfrutar tu entorno.${NC}"
+    else
+        echo -e "\n${ROJO}❌ Error: Falló la extracción del archivo tar.gz.${NC}"
     fi
 
     pausar
