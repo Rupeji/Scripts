@@ -575,7 +575,7 @@ aplicar_iconos_custom() {
     # Lista de aplicaciones: "Nombre_Archivo_Desktop|Nombre_Imagen_Icono|Ruta_Origen"
     declare -a APPS_ICONOS=(
         "com.discordapp.Discord.desktop|scribcord.png|/var/lib/flatpak/exports/share/applications"
-        "thunar.desktop|scribder.png|/usr/share/applications"
+        "org.kde.dolphin.desktop|scribder.png|/usr/share/applications"
         "kitty.desktop|Scribbled_Kitty.png|/usr/share/applications"
         "org.mozilla.firefox.desktop|scribfox.png|/var/lib/flatpak/exports/share/applications"
         "steam.desktop|scribsteam.png|/usr/share/applications"
@@ -613,47 +613,6 @@ aplicar_iconos_custom() {
         echo -e "\n${VERDE}✔ ¡Iconos personalizados aplicados correctamente!${NC}"
     fi
 
-    pausar
-}
-# ==============================================================================
-# MÓDULO EXTRA 11:  DESCARGAR ICONOS Y WALLPAPERS DESDE GITHUB
-# ==============================================================================
-descargar_assets_github() {
-    echo -e "\n${AMARILLO}[+] Conectando con GitHub para descargar IconsWalls...${NC}"
-    # Creamos una ruta temporal aislada en /tmp para clonar sin dejar rastro en tu Home
-    DIR_TEMPORAL="/tmp/git_iconswalls_backup"
-    RUTA_DESTINO="$HOME/Pictures"
-    # Aseguramos que la carpeta Pictures exista en tu usuario
-    mkdir -p "$RUTA_DESTINO"
-    # Eliminamos restos previos en /tmp si el script falló en una ejecución anterior
-    rm -rf "$DIR_TEMPORAL"
-    echo -e "${AZUL}-> Clonando repositorio de forma superficial (sin historial pesado)...${NC}"
-
-    # --depth 1 descarga solo el último commit, ahorrando mucho tiempo y ancho de banda
-    if git clone --depth 1 https://github.com/Rupeji/IconsWalls "$DIR_TEMPORAL" &>/dev/null; then
-        echo -e "${VERDE}✔ Repositorio clonado correctamente en zona temporal.${NC}"
-
-        # Copiamos la carpeta de Iconos
-        if [ -d "$DIR_TEMPORAL/Iconos" ]; then
-            echo -e "${AZUL}-> Copiando carpeta Iconos a $RUTA_DESTINO/...${NC}"
-            cp -r "$DIR_TEMPORAL/Iconos" "$RUTA_DESTINO/"
-        fi
-        # Copiamos la carpeta de Wallpapers
-        if [ -d "$DIR_TEMPORAL/Wallpapers" ]; then
-            echo -e "${AZUL}-> Copiando carpeta Wallpapers a $RUTA_DESTINO/...${NC}"
-            cp -r "$DIR_TEMPORAL/Wallpapers" "$RUTA_DESTINO/"
-        fi
-        echo -e "${VERDE}✔ ¡Carpetas copiadas con éxito en tu directorio de imágenes!${NC}"
-    else
-        echo -e "${ROJO}❌ Error: No se pudo conectar con GitHub o clonar el repositorio.${NC}"
-    fi
-    # Limpieza absoluta de rastros
-    echo -e "\n${AMARILLO}[+] Eliminando archivos temporales y limpiando rastro de Git...${NC}"
-    rm -rf "$DIR_TEMPORAL"
-
-    if [ ! -d "$DIR_TEMPORAL" ]; then
-        echo -e "${VERDE}✔ ¡Sistema limpio de restos! El clon temporal ha sido eliminado.${NC}"
-    fi
     pausar
 }
 # ==============================================================================
