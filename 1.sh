@@ -69,15 +69,23 @@ if [ -d "$RUTA_ICONOS" ]; then
         ruta_origen="${RUTAS_SUGERIDAS[$i]}"
 
         if [ -f "$RUTA_ICONOS/$icono_file" ]; then
+            # Si el lanzador base no está en la ruta sugerida, lo buscamos en el sistema
             if [ ! -f "$ruta_origen/$desktop_file" ]; then
                 ruta_detectada=$(find /var/lib/flatpak/ ~/.local/share/ /usr/share/applications/ -name "$desktop_file" -print -quit 2>/dev/null)
                 [ -n "$ruta_detectada" ] && ruta_origen=$(dirname "$ruta_detectada")
             fi
 
             if [ -f "$ruta_origen/$desktop_file" ]; then
-                echo -e "${AZUL} -> Enlazando icono custom a ${VERDE}${desktop_file}${NC}"
                 mkdir -p "$RUTA_LOCAL_APPS"
-                cp "$ruta_origen/$desktop_file" "$RUTA_LOCAL_APPS/"
+                
+                # [CORRECCIÓN] Copiar solo si la ruta de origen no es ya tu carpeta local
+                if [ "$ruta_origen" != "$RUTA_LOCAL_APPS" ]; then
+                    echo -e "${AZUL} -> Enlazando icono custom a ${VERDE}${desktop_file}${NC}"
+                    cp "$ruta_origen/$desktop_file" "$RUTA_LOCAL_APPS/"
+                else
+                    echo -e "${AZUL} -> Modificando icono existente en ${VERDE}${desktop_file}${NC}"
+                fi
+                
                 sed -i "s|^Icon=.*|Icon=${RUTA_ICONOS}/${icono_file}|" "$RUTA_LOCAL_APPS/$desktop_file"
                 A_MENOS_UNO_CAMBIADO=true
             fi
