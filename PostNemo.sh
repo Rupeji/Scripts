@@ -4,6 +4,10 @@
 # SUITE PORTÁTIL DE CONFIGURACIÓN Y DESARROLLO BAZZITE (GTK LIGHT)
 # =====================================================================
 
+# [SOLUCIÓN DEFINITIVA] Cálculo universal de ruta compatible con Bash y Fish
+SCRIPT_DIR=$(dirname "$(readlink -f "$0" 2>/dev/null || echo "$0")")
+RUTA_PENDRIVE=$(cd "$SCRIPT_DIR" &>/dev/null && pwd)
+
 VERDE='\033[0;32m'
 AZUL='\033[0;34m'
 AMARILLO='\033[1;33m'
