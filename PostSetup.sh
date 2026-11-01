@@ -257,11 +257,11 @@ submenu_cocinar_iso() {
 
                 if [ $? -eq 0 ]; then
                     if [ -f "$RUTA_PENDRIVE/CustomBazzite/bootiso/install.iso" ]; then
-                        mv "$RUTA_PENDRIVE/CustomBazzite/bootiso/install.iso" "$RUTA_PENDRIVE/CustomBazzite/bootiso/CustomBazzite.iso"
+                        sudo mv "$RUTA_PENDRIVE/CustomBazzite/bootiso/install.iso" "$RUTA_PENDRIVE/CustomBazzite/bootiso/CustomBazzite.iso"
                     fi
                     sudo chown -R $USER:$USER "$RUTA_PENDRIVE/CustomBazzite" >/dev/null 2>&1
                     echo -e "\n${VERDE}[✓] ¡ISO CustomBazzite.iso horneada directamente en tu USB!${NC}"
-                    echo "Tu instalador definitivo te espera en: $VERDE$RUTA_PENDRIVE/CustomBazzite/bootiso/CustomBazzite.iso${NC}"
+                    echo -e "Tu instalador definitivo te espera en: ${VERDE}$RUTA_PENDRIVE/CustomBazzite/bootiso/CustomBazzite.iso${NC}"
                 else
                     echo -e "\n${ROJO}[X] La compilación ha fallado.${NC}"
                 fi
