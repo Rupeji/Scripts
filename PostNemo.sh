@@ -302,3 +302,36 @@ submenu_cocinar_iso() {
         esac
     done
 }
+# =====================================================================
+# BUCLE DEL MENÚ PRINCIPAL
+# =====================================================================
+while true; do
+    clear
+    echo -e "${AZUL}=======================================================${NC}"
+    echo -e "${AZUL}    🛠️  SUITE DE GESTIÓN Y CONFIGURACIÓN BAZZITE (USB)${NC}"
+    echo -e "    Unidad detectada: $RUTA_PENDRIVE"
+    echo -e "${AZUL}=======================================================${NC}"
+    echo -e " 1) Ejecutar instalación completa + Rice + Iconos Custom (Reinicia)"
+    echo -e " 2) Respaldar personalización actual (Crea .tar.gz en el USB)"
+    echo -e " 3) Restaurar iconos originales del sistema (Deshacer)"
+    echo -e " 4) Opciones de Desarrollo / Cocinar ISO de GitHub -->"
+    echo -e " 5) Salir"
+    echo -e "${AZUL}=======================================================${NC}"
+
+    read -p "Selecciona una opción [1-5]: " opcion
+
+    case $opcion in
+        1) ejecutar_instalacion_completa ;;
+        2) respaldar_rice_kinetic ;;
+        3) restaurar_iconos_defecto ;;
+        4) submenu_cocinar_iso ;;
+        5)
+            echo -e "\n${VERDE}¡Hasta luego! Saliendo limpiamente...${NC}"
+            exit 0
+            ;;
+        *)
+            echo -e "\n${ROJO}❌ Opción no válida. Inténtalo de nuevo.${NC}"
+            sleep 1.2
+            ;;
+    esac
+done
