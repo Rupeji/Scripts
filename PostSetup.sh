@@ -64,22 +64,33 @@ EOF
     echo -e "\n${AMARILLO}[+] Paso 2: Preparando la restauración del entorno...${NC}"
     if [ -n "$(ls -A "$RUTA_PENDRIVE"/rice_kineticos_*.tar.gz 2>/dev/null)" ]; then
         Archivo_Mas_Reciente=$(ls -t "$RUTA_PENDRIVE"/rice_kineticos_*.tar.gz 2>/dev/null | head -n 1)
-        echo -e "${VERDE}✔ Copia de seguridad encontrada: $(basename "$Archivo_Mas_Reciente")${NC}"
+        echo -e "${VERDE}✔ Copia de seguridad encontrada en el pendrive:${NC}"
+        echo "   📦 $(basename "$Archivo_Mas_Reciente")"
     else
-        echo -e "${ROJO}❌ Error: No se encontró ninguna copia en el USB.${NC}"
+        echo -e "${ROJO}❌ Error: No se encontró ninguna copia en la raíz del pendrive.${NC}"
         pausar
         return 1
     fi
 
-    read -p "$(echo -e "${AMARILLO}¿Deseas restaurar este archivo? [s/N]: ${NC}")" confirmar
+    read -p "$(echo -e "${AMARILLO}¿Deseas restaurar este archivo específico? [s/N]: ${NC}")" confirmar
     if [[ "$confirmar" =~ ^[Ss]$ ]]; then
-        echo -e "\n${AZUL}-> Purgando entornos antiguos...${NC}"
+        echo -e "\n${AZUL}-> Purgando entornos antiguos (Noctalia, KineticWE y Firefox)...${NC}"
         rm -rf "$HOME/.config/kineticwe" "$HOME/.config/noctalia" "$HOME/.config/noctalia-kwe" \
                "$HOME/.config/noctalia-greeter-kwe" "$HOME/.config/noctalia-greeter" \
-               "$HOME/.config/niri" "$HOME/.local/state/noctalia" "$HOME/.local/state/noctalia-kwe"
+               "$HOME/.config/niri" "$HOME/.local/state/noctalia" "$HOME/.local/state/noctalia-kwe" \
+               "$HOME/.config/mozilla/firefox"
 
-        echo -e "${AZUL}-> Extrayendo archivos en ($HOME)...${NC}"
+        echo -e "${AZUL}-> Extrayendo archivos en tu zona personal ($HOME)...${NC}"
         tar -xzf "$Archivo_Mas_Reciente" -C "$HOME/"
+        if [ $? -eq 0 ]; then
+            echo -e "${VERDE}✔ ¡Tu personalización y perfil de Firefox han sido restaurados con éxito!${NC}"
+        else
+            echo -e "${ROJO}❌ Error: Falló la extracción del archivo tar.gz.${NC}"
+            pausar
+            return 1
+        fi
+    else
+        echo -e "${AMARILLO}⚠ Restauración del Rice omitida por el usuario.${NC}"
     fi
 
     # 3. APLICAR ICONOS CUSTOM
@@ -123,17 +134,24 @@ respaldar_rice_kinetic() {
 
     if [ -d "$HOME/.config/kineticwe" ]; then
         cd "$HOME" || return 1
+        # 1. Carpetas estándar de KineticWE, Noctalia y Niri en .config
         RUTAS_A_COPIAR=".config/kineticwe"
         [ -d ".config/noctalia" ] && RUTAS_A_COPIAR="$RUTAS_A_COPIAR .config/noctalia"
         [ -d ".config/noctalia-kwe" ] && RUTAS_A_COPIAR="$RUTAS_A_COPIAR .config/noctalia-kwe"
         [ -d ".config/noctalia-greeter-kwe" ] && RUTAS_A_COPIAR="$RUTAS_A_COPIAR .config/noctalia-greeter-kwe"
         [ -d ".config/noctalia-greeter" ] && RUTAS_A_COPIAR="$RUTAS_A_COPIAR .config/noctalia-greeter"
         [ -d ".config/niri" ] && RUTAS_A_COPIAR="$RUTAS_A_COPIAR .config/niri"
+
+        # [AÑADIDO] Rastrear el perfil de Firefox Flatpak en tu .config
+        [ -d ".config/mozilla/firefox" ] && RUTAS_A_COPIAR="$RUTAS_A_COPIAR .config/mozilla/firefox"
+
+        # 2. Estado persistente de la interfaz gráfica (Noctalia GUI)
         [ -d ".local/state/noctalia" ] && RUTAS_A_COPIAR="$RUTAS_A_COPIAR .local/state/noctalia"
         [ -d ".local/state/noctalia-kwe" ] && RUTAS_A_COPIAR="$RUTAS_A_COPIAR .local/state/noctalia-kwe"
 
         echo -e "${AZUL}-> Empaquetando componentes detectados hacia el pendrive...${NC}"
-        tar -czf "$Archivo_Backup" $RUTAS_A_COPIAR 2>/dev/null
+        # Excluimos las cachés de Noctalia y de Firefox para que el backup ocupe el mínimo espacio
+        tar --exclude='plugin-cache' --exclude='cache2' --exclude='jumpListCache' --exclude='startupCache' -czf "$Archivo_Backup" $RUTAS_A_COPIAR 2>/dev/null
 
         if [ $? -eq 0 ]; then
             echo -e "\n${VERDE}✔ ¡Copia de seguridad creada con éxito!${NC}"
@@ -206,11 +224,20 @@ submenu_cocinar_iso() {
                 pausar
                 ;;
             3)
-                echo -e "\n${AZUL}[+] Configurando entorno interactivo...${NC}"
-                printf '[customizations.installer.kickstart]\ncontents = "graphical"\n\n[customizations.installer.modules]\nenable = [\n  "org.fedoraproject.Anaconda.Modules.Storage",\n  "org.fedoraproject.Anaconda.Modules.Runtime",\n  "org.fedoraproject.Anaconda.Modules.Network",\n  "org.fedoraproject.Anaconda.Modules.Security",\n  "org.fedoraproject.Anaconda.Modules.Services",\n  "org.fedoraproject.Anaconda.Modules.Users",\n  "org.fedoraproject.Anaconda.Modules.Timezone"\n]\ndisable = [\n  "org.fedoraproject.Anaconda.Modules.Subscription"\n]\n' > ./builder-config.toml
-
+                echo -e "\n${AZUL}[+] Preparando entorno y carpetas en el pendrive...${NC}"
                 mkdir -p "$RUTA_PENDRIVE/CustomBazzite"
                 chmod 777 "$RUTA_PENDRIVE/CustomBazzite"
+
+                echo -e "${AZUL}[+] Configurando el entorno interactivo de Anaconda...${NC}"
+                printf '[customizations.installer.kickstart]\ncontents = "graphical"\n\n[customizations.installer.modules]\nenable = [\n  "org.fedoraproject.Anaconda.Modules.Storage",\n  "org.fedoraproject.Anaconda.Modules.Runtime",\n  "org.fedoraproject.Anaconda.Modules.Network",\n  "org.fedoraproject.Anaconda.Modules.Security",\n  "org.fedoraproject.Anaconda.Modules.Services",\n  "org.fedoraproject.Anaconda.Modules.Users",\n  "org.fedoraproject.Anaconda.Modules.Timezone"\n]\ndisable = [\n  "org.fedoraproject.Anaconda.Modules.Subscription"\n]\n' > ./builder-config.toml
+
+                # Comprobación de Podman que venía en el módulo original
+                if ! command -v podman &> /dev/null; then
+                    echo -e "${AMARILLO}[!] Podman no encontrado en el sistema base. Intentando inicializar el servicio...${NC}"
+                    sudo systemctl enable --now podman.socket &>/dev/null
+                else
+                    echo -e "${VERDE}[✓] El motor Podman está presente y activo.${NC}"
+                fi
 
                 echo -e "${AZUL}[+] Lanzando bootc-image-builder (Proceso pesado)...${NC}"
                 sudo podman run \
@@ -234,6 +261,7 @@ submenu_cocinar_iso() {
                     fi
                     sudo chown -R $USER:$USER "$RUTA_PENDRIVE/CustomBazzite" >/dev/null 2>&1
                     echo -e "\n${VERDE}[✓] ¡ISO CustomBazzite.iso horneada directamente en tu USB!${NC}"
+                    echo "Tu instalador definitivo te espera en: $VERDE$RUTA_PENDRIVE/CustomBazzite/bootiso/CustomBazzite.iso${NC}"
                 else
                     echo -e "\n${ROJO}[X] La compilación ha fallado.${NC}"
                 fi
