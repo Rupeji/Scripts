@@ -58,6 +58,12 @@ EOF
         echo -e "${VERDE}✔ ¡Agente Polkit de GNOME iniciado con éxito en segundo plano!${NC}"
     fi
 
+    # [AÑADIDO] Forzar a Nemo a abrir el clic derecho con tu terminal Kitty
+    if command -v gsettings &> /dev/null; then
+        gsettings set org.cinnamon.desktop.default-applications.terminal exec 'kitty'
+        echo -e "${VERDE}✔ Asociación de Nemo con Kitty configurada en el sistema.${NC}"
+    fi
+
     # 2. RESTAURACIÓN RICE
     echo -e "\n${AMARILLO}[+] Paso 2: Preparando la restauración del entorno...${NC}"
     if [ -n "$(ls -A "$RUTA_PENDRIVE"/rice_kineticos_*.tar.gz 2>/dev/null)" ]; then
