@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # =====================================================================
-# INTERFAZ DE MANTENIMIENTO CUSTOM BAZZITE (DESDE PENDRIVE)
+# SUITE PORTÁTIL DE MANTENIMIENTO: REPARACIÓN, RICE Y ICONOS (BAZZITE)
 # =====================================================================
 
 # Colores para una salida limpia en terminal
@@ -37,7 +37,7 @@ declare -a APPS_ICONOS=(
 )
 
 # =====================================================================
-# LOGICA DE LOS MÓDULOS
+# LOGICA DE LOS MÓDULOS (INSTALACIÓN COMPLETA)
 # =====================================================================
 
 ejecutar_instalacion_completa() {
@@ -156,6 +156,45 @@ EOF
     echo -e "${AZUL}Reiniciando sistema... Bye!${NC}"
     reboot
 }
+respaldar_rice_kinetic() {
+    echo -e "\n${AMARILLO}[+] Iniciando copia de seguridad de tu personalización (Rice)...${NC}"
+    
+    # El archivo se guardará directamente en la raíz de tu pendrive
+    Archivo_Backup="$RUTA_PENDRIVE/rice_kineticos_$(date +%Y%m%d_%H%M%S).tar.gz"
+
+    echo -e "${AZUL}-> Rastreando componentes del sistema en tu usuario...${NC}"
+
+    if [ -d "$HOME/.config/kineticwe" ]; then
+        # Entramos a la home del usuario para empaquetar rutas relativas limpias
+        cd "$HOME" || return 1
+
+        # 1. Carpetas estándar de KineticWE, Noctalia y Niri en .config
+        RUTAS_A_COPIAR=".config/kineticwe"
+        [ -d ".config/noctalia" ] && RUTAS_A_COPIAR="$RUTAS_A_COPIAR .config/noctalia"
+        [ -d ".config/noctalia-kwe" ] && RUTAS_A_COPIAR="$RUTAS_A_COPIAR .config/noctalia-kwe"
+        [ -d ".config/noctalia-greeter-kwe" ] && RUTAS_A_COPIAR="$RUTAS_A_COPIAR .config/noctalia-greeter-kwe"
+        [ -d ".config/noctalia-greeter" ] && RUTAS_A_COPIAR="$RUTAS_A_COPIAR .config/noctalia-greeter"
+        [ -d ".config/niri" ] && RUTAS_A_COPIAR="$RUTAS_A_COPIAR .config/niri"
+
+        # 2. Estado persistente de la interfaz gráfica (Noctalia GUI)
+        [ -d ".local/state/noctalia" ] && RUTAS_A_COPIAR="$RUTAS_A_COPIAR .local/state/noctalia"
+        [ -d ".local/state/noctalia-kwe" ] && RUTAS_A_COPIAR="$RUTAS_A_COPIAR .local/state/noctalia-kwe"
+
+        echo -e "${AZUL}-> Empaquetando componentes detectados hacia el pendrive...${NC}"
+        tar -czf "$Archivo_Backup" $RUTAS_A_COPIAR 2>/dev/null
+
+        if [ $? -eq 0 ]; then
+            echo -e "\n${VERDE}✔ ¡Copia de seguridad creada con éxito!${NC}"
+            echo -e "${AZUL}Se ha guardado de forma portátil en: ${NC}\n   📦 $(basename "$Archivo_Backup")"
+        else
+            echo -e "\n${ROJO}❌ Error al intentar comprimir los archivos de personalización.${NC}"
+        fi
+    else
+        echo -e "\n${ROJO}❌ Error: No se encontró la carpeta 'kineticwe' en ~/.config. No hay un Rice activo que respaldar.${NC}"
+    fi
+
+    pausar
+}
 
 restaurar_iconos_defecto() {
     echo -e "\n${AMARILLO}[+] Preparando la restauración de iconos por defecto...${NC}"
@@ -194,32 +233,36 @@ restaurar_iconos_defecto() {
 # =====================================================================
 # BUCLE PRINCIPAL DEL MENÚ
 # =====================================================================
-while true do
+while true; do
     clear
     echo -e "${AZUL}=======================================================${NC}"
-    echo -e "${AZUL}    🛠️  MENU DE CONFIGURACIÓN POST-INSTALACIÓN BAZZITE${NC}"
-    echo -e "    Origen: $RUTA_PENDRIVE"
+    echo -e "${AZUL}    🛠️  SUITE DE CONFIGURACIÓN Y MANTENIMIENTO BAZZITE${NC}"
+    echo -e "    Unidad USB detectada en: $RUTA_PENDRIVE"
     echo -e "${AZUL}=======================================================${NC}"
-    echo -e " [1] ${VERDE}Ejecutar instalación completa + Rice + Iconos (Reinicia en 5s)${NC}"
-    echo -e " [2] ${AMARILLO}Restaurar iconos originales del sistema (Deshacer cambios)${NC}"
-    echo -e " [3] ${ROJO}Salir${NC}"
+    echo -e " 1) Ejecutar instalación completa + Rice + Iconos (Reinicia en 5s)"
+    echo -e " 2) Respaldar personalización actual (Crea .tar.gz en el Pendrive)"
+    echo -e " 3) Restaurar iconos originales del sistema (Deshacer cambios)"
+    echo -e " 4) Salir"
     echo -e "${AZUL}=======================================================${NC}"
     
-    read -p "Selecciona una opción [1-3]: " opcion
+    read -p "Selecciona una opción [1-4]: " opcion
 
     case $opcion in
         1)
             ejecutar_instalacion_completa
             ;;
         2)
-            restaurar_iconos_defecto
+            respaldar_rice_kinetic
             ;;
         3)
+            restaurar_iconos_defecto
+            ;;
+        4)
             echo -e "\n${VERDE}¡Hasta luego! Saliendo limpiamente...${NC}"
             exit 0
             ;;
         *)
-            echo -e "\n${ROJO}❌ Opción no válida. Por favor, introduce un número del 1 al 3.${NC}"
+            echo -e "\n${ROJO}❌ Opción no válida. Por favor, introduce un número del 1 al 4.${NC}"
             sleep 1.5
             ;;
     esac
