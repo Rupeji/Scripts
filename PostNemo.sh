@@ -43,11 +43,10 @@ ejecutar_instalacion_completa() {
     cat << EOF > "$ARCHIVO_DESKTOP"
 [Desktop Entry]
 Type=Application
-Name=GNOME Polkit Authentication Agent
-Comment=Motor de contraseñas de administrador ligero en GTK
+Name=MATE Polkit Authentication Agent
+Comment=Motor de contraseñas de administrador ligero en GTK3
 Exec=$AGENTE_BIN
 Terminal=false
-X-GNOME-Autostart-enabled=true
 EOF
     chmod +x "$ARCHIVO_DESKTOP"
     echo -e "${VERDE}✔ Lanzador Polkit de GNOME configurado correctamente.${NC}"
