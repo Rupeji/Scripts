@@ -1,41 +1,40 @@
 #!/usr/bin/env bash
 
 # =====================================================================
-# SUITE PORTÁTIL DE CONFIGURACIÓN Y DESARROLLO BAZZITE (HÍBRIDO SEGURO)
+# SUITE PORTÁTIL DE CONFIGURACIÓN Y DESARROLLO BAZZITE (GTK LIGHT)
 # =====================================================================
 
 VERDE='\033[0;32m'
-ROJO='\033[0;31m'
 AZUL='\033[0;34m'
 AMARILLO='\033[1;33m'
+ROJO='\033[0;31m'
 NC='\033[0m'
 
-pausar() {
-    echo ""
-    read -p "Presiona [Enter] para volver al menú..."
-}
+# [CORREGIDO PARA MATE-POLKIT]
+AGENTE_BIN="/usr/libexec/polkit-mate-authentication-agent-1"
+ARCHIVO_DESKTOP="$HOME/.config/autostart/polkit-mate-authentication-agent-1.desktop"
+DIRECTORIO_AUTOSTART="$HOME/.config/autostart"
 
-RUTA_PENDRIVE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# [MODIFICADO] Variables de la Suite de Iconos adaptadas a Nemo en /usr/share/
+RUTA_LOCAL_APPS="$HOME/.local/share/applications"
+RUTA_ICONOS="/var/home/inhumano/Pruebas/Iconos" # Ajusta según tu entorno real
 
-AGENTE_BIN="/usr/libexec/kf6/polkit-kde-authentication-agent-1"
-DIRECTORIO_AUTOSTART="${HOME}/.config/autostart"
-ARCHIVO_DESKTOP="${DIRECTORIO_AUTOSTART}/polkit-kde-authentication-agent-1.desktop"
-RUTA_ICONOS="$RUTA_PENDRIVE/Iconos"
-RUTA_LOCAL_APPS="${HOME}/.local/share/applications"
-
-RCHIVOS_DESKTOP=("com.discordapp.Discord.desktop" "nemo.desktop" "kitty.desktop" "org.mozilla.firefox.desktop" "steam.desktop")
+ARCHIVOS_DESKTOP=("com.discordapp.Discord.desktop" "nemo.desktop" "kitty.desktop" "org.mozilla.firefox.desktop" "steam.desktop")
 ARCHIVOS_ICONO=("scribcord.png" "scribder.png" "Scribbled_Kitty.png" "scribfox.png" "scribsteam.png")
 RUTAS_SUGERIDAS=("/var/lib/flatpak/exports/share/applications" "/usr/share/applications" "/usr/share/applications" "/var/lib/flatpak/exports/share/applications" "/usr/share/applications")
 
+# =====================================================================
+# PARTE 1: FUNCIÓN DE INSTALACIÓN COMPLETA
+# =====================================================================
 ejecutar_instalacion_completa() {
     echo -e "\n${AZUL}=======================================================${NC}"
-    echo -e "${AZUL}🚀 Iniciando Instalación Completa Post-Instalación${NC}"
+    echo -e "${AZUL}🚀 Iniciando Instalación Completa Post-Instalación (GTK)${NC}"
     echo -e "${AZUL}=======================================================${NC}"
 
-    # 1. POLKIT FIX
-    echo -e "\n${AMARILLO}[+] Paso 1: Configurando Agente Polkit...${NC}"
+    # 1. POLKIT FIX (GNOME)
+    echo -e "\n${AMARILLO}[+] Paso 1: Configurando Agente Polkit para MATE...${NC}"
     if [ ! -f "$AGENTE_BIN" ]; then
-        echo -e "${ROJO}❌ Error crítico: El archivo $AGENTE_BIN no existe.${NC}"
+        echo -e "${ROJO}❌ Error crítico: No se encontró el Agente Polkit de MATE en $AGENTE_BIN.${NC}"
         pausar
         return 1
     fi
@@ -44,21 +43,20 @@ ejecutar_instalacion_completa() {
     cat << EOF > "$ARCHIVO_DESKTOP"
 [Desktop Entry]
 Type=Application
-Name=KDE Polkit Authentication Agent
-Comment=Motor de contraseñas de administrador para apps gráficas
+Name=GNOME Polkit Authentication Agent
+Comment=Motor de contraseñas de administrador ligero en GTK
 Exec=$AGENTE_BIN
 Terminal=false
-X-KDE-Autostart-phase=1
+X-GNOME-Autostart-enabled=true
 EOF
     chmod +x "$ARCHIVO_DESKTOP"
-    echo -e "${VERDE}✔ Lanzador Polkit configurado correctamente.${NC}"
-    
+    echo -e "${VERDE}✔ Lanzador Polkit de GNOME configurado correctamente.${NC}"
+
     if pgrep -f "$(basename "$AGENTE_BIN")" > /dev/null; then
-        echo -e "${AZUL}ℹ El agente ya se encuentra corriendo en segundo plano.${NC}"
+        echo -e "${AZUL}ℹ El agente de GNOME ya se encuentra corriendo en segundo plano.${NC}"
     else
-        # [CORRECCIÓN] Silenciamos por completo los logs de Qt/DBus del binario en segundo plano
         "$AGENTE_BIN" >/dev/null 2>&1 &
-        echo -e "${VERDE}✔ ¡Agente Polkit iniciado con éxito en segundo plano!${NC}"
+        echo -e "${VERDE}✔ ¡Agente Polkit de GNOME iniciado con éxito en segundo plano!${NC}"
     fi
 
     # 2. RESTAURACIÓN RICE
