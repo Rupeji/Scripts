@@ -182,7 +182,7 @@ restaurar_iconos_defecto() {
 
         if [ "$A_MENOS_UNO_REVERTIDO" = true ]; then
             update-desktop-database "$RUTA_LOCAL_APPS" &>/dev/null
-            echo -e "\n${VERDE}✔ ¡Iconos restaurados de fábrica!${NC}"
+            echo -e "\n${VERDE}✔ ¡Iconos restaurados de fábrica! Nemo y el resto vuelven al estado original.${NC}"
         else
             echo -e "\n${VERDE}✔ No se encontraron modificaciones activas que revertir.${NC}"
         fi
