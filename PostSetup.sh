@@ -52,12 +52,13 @@ X-KDE-Autostart-phase=1
 EOF
     chmod +x "$ARCHIVO_DESKTOP"
     echo -e "${VERDE}✔ Lanzador Polkit configurado correctamente.${NC}"
-
+    
     if pgrep -f "$(basename "$AGENTE_BIN")" > /dev/null; then
-        echo -e "${AZUL}ℹ El agente ya se encuentra corriendo.${NC}"
+        echo -e "${AZUL}ℹ El agente ya se encuentra corriendo en segundo plano.${NC}"
     else
-        "$AGENTE_BIN" &
-        echo -e "${VERDE}✔ ¡Agente Polkit iniciado en segundo plano!${NC}"
+        # [CORRECCIÓN] Silenciamos por completo los logs de Qt/DBus del binario en segundo plano
+        "$AGENTE_BIN" >/dev/null 2>&1 &
+        echo -e "${VERDE}✔ ¡Agente Polkit iniciado con éxito en segundo plano!${NC}"
     fi
 
     # 2. RESTAURACIÓN RICE
