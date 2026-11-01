@@ -8,6 +8,11 @@
 SCRIPT_DIR=$(dirname "$(readlink -f "$0" 2>/dev/null || echo "$0")")
 RUTA_PENDRIVE=$(cd "$SCRIPT_DIR" &>/dev/null && pwd)
 
+# Seguro anticaídas: si algo falla, usa tu HOME para no tocar la raíz inmutable
+if [ -z "$RUTA_PENDRIVE" ] || [ "$RUTA_PENDRIVE" = "/" ]; then
+    RUTA_PENDRIVE="$HOME"
+fi
+
 VERDE='\033[0;32m'
 AZUL='\033[0;34m'
 AMARILLO='\033[1;33m'
@@ -19,14 +24,19 @@ AGENTE_BIN="/usr/libexec/polkit-mate-authentication-agent-1"
 ARCHIVO_DESKTOP="$HOME/.config/autostart/polkit-mate-authentication-agent-1.desktop"
 DIRECTORIO_AUTOSTART="$HOME/.config/autostart"
 
-# [MODIFICADO] Variables de la Suite de Iconos adaptadas a Nemo en /usr/share/
+# Variables de la Suite de Iconos adaptadas a Nemo
 RUTA_LOCAL_APPS="$HOME/.local/share/applications"
-RUTA_ICONOS="/var/home/inhumano/Pruebas/Iconos" # Ajusta según tu entorno real
+RUTA_ICONOS="$RUTA_PENDRIVE/Iconos"
 
 ARCHIVOS_DESKTOP=("com.discordapp.Discord.desktop" "nemo.desktop" "kitty.desktop" "org.mozilla.firefox.desktop" "steam.desktop")
 ARCHIVOS_ICONO=("scribcord.png" "scribder.png" "Scribbled_Kitty.png" "scribfox.png" "scribsteam.png")
 RUTAS_SUGERIDAS=("/var/lib/flatpak/exports/share/applications" "/usr/share/applications" "/usr/share/applications" "/var/lib/flatpak/exports/share/applications" "/usr/share/applications")
 
+# Función auxiliar para pausar los menús
+pausar() {
+    echo -e "\n${AMARILLO}Presiona [Intro] para continuar...${NC}"
+    read -r
+}
 # =====================================================================
 # PARTE 1: FUNCIÓN DE INSTALACIÓN COMPLETA
 # =====================================================================
@@ -35,7 +45,7 @@ ejecutar_instalacion_completa() {
     echo -e "${AZUL}🚀 Iniciando Instalación Completa Post-Instalación (GTK)${NC}"
     echo -e "${AZUL}=======================================================${NC}"
 
-    # 1. POLKIT FIX (GNOME)
+    # 1. POLKIT FIX (MATE)
     echo -e "\n${AMARILLO}[+] Paso 1: Configurando Agente Polkit para MATE...${NC}"
     if [ ! -f "$AGENTE_BIN" ]; then
         echo -e "${ROJO}❌ Error crítico: No se encontró el Agente Polkit de MATE en $AGENTE_BIN.${NC}"
@@ -53,19 +63,21 @@ Exec=$AGENTE_BIN
 Terminal=false
 EOF
     chmod +x "$ARCHIVO_DESKTOP"
-    echo -e "${VERDE}✔ Lanzador Polkit de GNOME configurado correctamente.${NC}"
+    echo -e "${VERDE}✔ Lanzador Polkit de MATE configurado correctamente.${NC}"
 
     if pgrep -f "$(basename "$AGENTE_BIN")" > /dev/null; then
-        echo -e "${AZUL}ℹ El agente de GNOME ya se encuentra corriendo en segundo plano.${NC}"
+        echo -e "${AZUL}ℹ El agente de MATE ya se encuentra corriendo en segundo plano.${NC}"
     else
         "$AGENTE_BIN" >/dev/null 2>&1 &
-        echo -e "${VERDE}✔ ¡Agente Polkit de GNOME iniciado con éxito en segundo plano!${NC}"
+        echo -e "${VERDE}✔ ¡Agente Polkit de MATE iniciado con éxito en segundo plano!${NC}"
     fi
 
-    # [AÑADIDO] Forzar a Nemo a abrir el clic derecho con tu terminal Kitty
+    # Forzar a Nemo a abrir el clic derecho con tu terminal Kitty e iconos de Noctalia
     if command -v gsettings &> /dev/null; then
         gsettings set org.cinnamon.desktop.default-applications.terminal exec 'kitty'
         echo -e "${VERDE}✔ Asociación de Nemo con Kitty configurada en el sistema.${NC}"
+        gsettings set org.cinnamon.desktop.interface icon-theme 'Adwaita'
+        echo -e "${VERDE}✔ Tema de iconos Adwaita asignado a Nemo con éxito.${NC}"
     fi
 
     # 2. RESTAURACIÓN RICE
@@ -118,9 +130,13 @@ EOF
                 fi
 
                 if [ -f "$ruta_origen/$desktop_file" ]; then
-                    echo -e "${AZUL} -> Aplicando icono a ${VERDE}${desktop_file}${NC}"
                     mkdir -p "$RUTA_LOCAL_APPS"
-                    cp "$ruta_origen/$desktop_file" "$RUTA_LOCAL_APPS/"
+                    if [ "$ruta_origen" != "$RUTA_LOCAL_APPS" ]; then
+                        echo -e "${AZUL} -> Enlazando icono custom a ${VERDE}${desktop_file}${NC}"
+                        cp "$ruta_origen/$desktop_file" "$RUTA_LOCAL_APPS/"
+                    else
+                        echo -e "${AZUL} -> Modificando icono existente en ${VERDE}${desktop_file}${NC}"
+                    fi
                     sed -i "s|^Icon=.*|Icon=${RUTA_ICONOS}/${icono_file}|" "$RUTA_LOCAL_APPS/$desktop_file"
                     A_MENOS_UNO_CAMBIADO=true
                 fi
@@ -136,29 +152,26 @@ EOF
     for i in {5..1}; do echo -e "${AMARILLO}$i...${NC}"; sleep 1; done
     reboot
 }
+# =====================================================================
+# PARTE 2: FUNCIONES DE SOPORTE Y DESARROLLO DE LA ISO
+# =====================================================================
 respaldar_rice_kinetic() {
     echo -e "\n${AMARILLO}[+] Iniciando copia de seguridad de tu personalización (Rice)...${NC}"
     Archivo_Backup="$RUTA_PENDRIVE/rice_kineticos_$(date +%Y%m%d_%H%M%S).tar.gz"
 
     if [ -d "$HOME/.config/kineticwe" ]; then
         cd "$HOME" || return 1
-        # 1. Carpetas estándar de KineticWE, Noctalia y Niri en .config
         RUTAS_A_COPIAR=".config/kineticwe"
         [ -d ".config/noctalia" ] && RUTAS_A_COPIAR="$RUTAS_A_COPIAR .config/noctalia"
         [ -d ".config/noctalia-kwe" ] && RUTAS_A_COPIAR="$RUTAS_A_COPIAR .config/noctalia-kwe"
         [ -d ".config/noctalia-greeter-kwe" ] && RUTAS_A_COPIAR="$RUTAS_A_COPIAR .config/noctalia-greeter-kwe"
         [ -d ".config/noctalia-greeter" ] && RUTAS_A_COPIAR="$RUTAS_A_COPIAR .config/noctalia-greeter"
         [ -d ".config/niri" ] && RUTAS_A_COPIAR="$RUTAS_A_COPIAR .config/niri"
-
-        # [AÑADIDO] Rastrear el perfil de Firefox Flatpak en tu .config
         [ -d ".config/mozilla/firefox" ] && RUTAS_A_COPIAR="$RUTAS_A_COPIAR .config/mozilla/firefox"
-
-        # 2. Estado persistente de la interfaz gráfica (Noctalia GUI)
         [ -d ".local/state/noctalia" ] && RUTAS_A_COPIAR="$RUTAS_A_COPIAR .local/state/noctalia"
         [ -d ".local/state/noctalia-kwe" ] && RUTAS_A_COPIAR="$RUTAS_A_COPIAR .local/state/noctalia-kwe"
 
         echo -e "${AZUL}-> Empaquetando componentes detectados hacia el pendrive...${NC}"
-        # Excluimos las cachés de Noctalia y de Firefox para que el backup ocupe el mínimo espacio
         tar --exclude='plugin-cache' --exclude='cache2' --exclude='jumpListCache' --exclude='startupCache' -czf "$Archivo_Backup" $RUTAS_A_COPIAR 2>/dev/null
 
         if [ $? -eq 0 ]; then
@@ -196,11 +209,12 @@ restaurar_iconos_defecto() {
     fi
     pausar
 }
+
 submenu_cocinar_iso() {
     while true; do
         clear
         echo -e "${AZUL}=======================================================${NC}"
-        echo -e "${AZUL}   🛠️  HERRAMIENTAS DE DESARROLLO GITHUB (CUSTOM ISO)${NC}"
+        echo -e "   🛠️  HERRAMIENTAS DE DESARROLLO GITHUB (CUSTOM ISO)${NC}"
         echo -e "   Ruta Destino USB: $RUTA_PENDRIVE/CustomBazzite"
         echo -e "${AZUL}=======================================================${NC}"
         echo -e " 1) ${ROJO}[LIMPIAR TODO]${NC} Purgar carpetas, imágenes huérfanas y cachés"
@@ -239,7 +253,6 @@ submenu_cocinar_iso() {
                 echo -e "${AZUL}[+] Configurando el entorno interactivo de Anaconda...${NC}"
                 printf '[customizations.installer.kickstart]\ncontents = "graphical"\n\n[customizations.installer.modules]\nenable = [\n  "org.fedoraproject.Anaconda.Modules.Storage",\n  "org.fedoraproject.Anaconda.Modules.Runtime",\n  "org.fedoraproject.Anaconda.Modules.Network",\n  "org.fedoraproject.Anaconda.Modules.Security",\n  "org.fedoraproject.Anaconda.Modules.Services",\n  "org.fedoraproject.Anaconda.Modules.Users",\n  "org.fedoraproject.Anaconda.Modules.Timezone"\n]\ndisable = [\n  "org.fedoraproject.Anaconda.Modules.Subscription"\n]\n' > ./builder-config.toml
 
-                # Comprobación de Podman que venía en el módulo original
                 if ! command -v podman &> /dev/null; then
                     echo -e "${AMARILLO}[!] Podman no encontrado en el sistema base. Intentando inicializar el servicio...${NC}"
                     sudo systemctl enable --now podman.socket &>/dev/null
@@ -289,37 +302,3 @@ submenu_cocinar_iso() {
         esac
     done
 }
-
-# =====================================================================
-# BUCLE DEL MENÚ PRINCIPAL
-# =====================================================================
-while true; do
-    clear
-    echo -e "${AZUL}=======================================================${NC}"
-    echo -e "${AZUL}    🛠️  SUITE DE GESTIÓN Y CONFIGURACIÓN BAZZITE (USB)${NC}"
-    echo -e "    Unidad detectada: $RUTA_PENDRIVE"
-    echo -e "${AZUL}=======================================================${NC}"
-    echo -e " 1) Ejecutar instalación completa + Rice + Iconos Custom (Reinicia)"
-    echo -e " 2) Respaldar personalización actual (Crea .tar.gz en el USB)"
-    echo -e " 3) Restaurar iconos originales del sistema (Deshacer)"
-    echo -e " 4) Opciones de Desarrollo / Cocinar ISO de GitHub -->"
-    echo -e " 5) Salir"
-    echo -e "${AZUL}=======================================================${NC}"
-
-    read -p "Selecciona una opción [1-5]: " opcion
-
-    case $opcion in
-        1) ejecutar_instalacion_completa ;;
-        2) respaldar_rice_kinetic ;;
-        3) restaurar_iconos_defecto ;;
-        4) submenu_cocinar_iso ;;
-        5)
-            echo -e "\n${VERDE}¡Hasta luego! Saliendo limpiamente...${NC}"
-            exit 0
-            ;;
-        *)
-            echo -e "\n${ROJO}❌ Opción no válida. Inténtalo de nuevo.${NC}"
-            sleep 1.2
-            ;;
-    esac
-done
