@@ -55,7 +55,7 @@ mostrar_menu() {
 
         case $opcion in
             1) opcion_1_herramientas_y_gaming ;;
-            2) opcion_2_instalar_kineticwe ;;
+            2) instalar_kineticwe ;;
             3) opcion_3_restaurar_rice ;;
             4) opcion_3_crear_backup_rice ;; # Llama a la función de copia de seguridad local
             5) opcion_4_aplicar_iconos_custom ;;
@@ -266,87 +266,108 @@ opcion_1_herramientas_y_gaming() {
     pausar
 }
 # ==============================================================================
-# OPCIÓN 2: CONFIGURACIÓN DE REPOSITORIO E INSTALACIÓN DE KINETICWE Y GREETER
+# OPCIÓN X: INSTALACIÓN DE KINETICWE EN ARCH
 # ==============================================================================
-opcion_2_instalar_kineticwe() {
+instalar_kineticwe() {
     clear
     echo -e "${AZUL}=======================================================${NC}"
-    echo -e "${AZUL}📦 Configurando Repositorio e Instalando KineticWE${NC}"
+    echo -e "${AZUL}🚀 Instalación de Entorno KineticWE en Arch Linux      ${NC}"
     echo -e "${AZUL}=======================================================${NC}"
 
-    # Truco de codificación para evitar el recorte de enlaces en la interfaz
-    # Cada número representa un carácter en código ASCII
-    local -a URL_BYTES=(104 116 116 112 115 58 47 47 116 104 101 98 108 97 99 107 100 111 110 46 103 105 116 108 97 98 46 105 111 47 107 105 110 101 116 105 99 119 101 47 107 105 110 101 116 105 99 119 101 46 103 112 103)
-    local KEY_URL=""
-    for b in "${URL_BYTES[@]}"; do
-        printf -v ch '\\x%x' "$b"
-        KEY_URL+="$(printf "$ch")"
-    done
-
     local FINGERPRINT="FD258A99CDC5F61B04A335EEE163D34B273AE987"
-    local REPO_BLOCK="[kineticwe]\nServer = https://gitlab.io\$arch"
-
-    # 1. Configuración de claves GPG oficiales de KineticWE
-    echo -e "${AZUL}--> Descargando clave GPG oficial...${NC}"
+    local KEY_URL="https://theblackdon.gitlab.io/kineticwe/kineticwe.gpg"
+    # #theblackdon.gitlab.io/kineticwe/kineticwe.gpg
     
-    # Forzamos la salida limpia al archivo exacto esperado
-    if ! curl -fsSL "$KEY_URL" -o kineticwe.gpg; then
-        echo -e "${AMARILLO}⚠️ Falló la descarga por GitLab Pages. Intentando desde el servidor de claves...${NC}"
-        sudo pacman-key --recv-keys "$FINGERPRINT" --keyserver hkps://keys.openpgp.org
+    # 1. Descarga y verificación de la clave GPG
+    echo -e "\n${AZUL}[+] Descargando clave GPG oficial...${NC}"
+    if ! curl -fLO "$KEY_URL" 2>/dev/null; then
+        echo -e "${AMARILLO}⚠ Falló la descarga por GitLab Pages. Intentando desde servidor de claves...${NC}"
+        
+        if ! sudo pacman-key --recv-keys "$FINGERPRINT" --keyserver hkps://keys.openpgp.org; then
+        # #k e y s . o p e n p g p . o r g
+            echo -e "${ROJO}[X] Error: No se pudo recibir la clave GPG.${NC}"
+            pausar
+            return 1
+        fi
     else
-        echo "--> Verificando la integridad de la clave..."
-        # Extrae la huella de la clave descargada usando el archivo garantizado en el paso anterior
+        echo -e "${AZUL}[+] Verificando la integridad de la clave...${NC}"
         local DOWNLOADED_FP
-        DOWNLOADED_FP=$(gpg --show-keys --with-colons kineticwe.gpg | awk -F: '$1=="fpr"{print $10}' | head -n 1)
+        DOWNLOADED_FP=$(gpg --show-keys --with-colons kineticwe.gpg 2>/dev/null | awk -F: '$1=="fpr"{print $10}' | head -n 1)
 
-        if [ -z "$DOWNLOADED_FP" ] || [ "$DOWNLOADED_FP" != "$FINGERPRINT" ]; then
-            echo -e "${ROJO}❌ ¡ERROR CRÍTICO! La huella digital no coincide o la clave está corrupta.${NC}"
-            echo "Esperada:  $FINGERPRINT"
-            echo "Obtenida:  $DOWNLOADED_FP"
+        if [ "$DOWNLOADED_FP" != "$FINGERPRINT" ]; then
+            echo -e "${ROJO}[X] ¡ERROR CRÍTICO! La huella digital no coincide.${NC}"
+            echo -e "    Esperada: $FINGERPRINT"
+            echo -e "    Obtenida: $DOWNLOADED_FP"
             rm -f kineticwe.gpg
             pausar
             return 1
         fi
 
-        echo -e "${VERDE}✅ Huella digital validada correctamente.${NC}"
-        
-        # Añadir la clave descargada
+        echo -e "${VERDE}[✓] Huella digital validada correctamente.${NC}"
         sudo pacman-key --add kineticwe.gpg
         rm -f kineticwe.gpg
     fi
 
-    echo "--> Firmando localmente la clave del repositorio..."
+    echo -e "${AZUL}[+] Firmando localmente la clave del repositorio...${NC}"
     sudo pacman-key --lsign-key "$FINGERPRINT"
 
-    # 2. Agregar el repositorio a /etc/pacman.conf si no existe
-    echo "--> Configurando repositorio en /etc/pacman.conf..."
-    if ! grep -q "\[kineticwe\]" /etc/pacman.conf; then
-        sudo tee -a /etc/pacman.conf << EOF
+    # 2. Agregar el repositorio a /etc/pacman.conf si no existe o si es erróneo
+    echo -e "\n${AZUL}[+] Configurando repositorio en /etc/pacman.conf...${NC}"
+    
+    if ! grep -q "theblackdon.gitlab.io/kineticwe" /etc/pacman.conf; then
+    # #t h e b l a c k d o n . g i t l a b . i o / k i n e t i c w e
+        echo -e "${AMARILLO}⚠ Repositorio no configurado o desactualizado. Reparando...${NC}"
+        
+        # Eliminamos un posible bloque anterior de [kineticwe] mal estructurado para evitar duplicados
+        sudo sed -i '/\[kineticwe\]/,+2d' /etc/pacman.conf 2>/dev/null
+        
+        # Insertamos el bloque correcto al final del archivo
+        if sudo tee -a /etc/pacman.conf << EOF > /dev/null
 
 [kineticwe]
-Server = https://gitlab.io\$arch
+Server = https://theblackdon.gitlab.io/kineticwe/\$arch
+# #t h e b l a c k d o n . g i t l a b . i o / k i n e t i c w e / \ $ a r c h
 EOF
-        echo -e "${VERDE}✅ Repositorio añadido correctamente.${NC}"
+        then
+            echo -e "${VERDE}[✓] Repositorio añadido correctamente.${NC}"
+        else
+            echo -e "${ROJO}[X] Error al escribir en /etc/pacman.conf.${NC}"
+            pausar
+            return 1
+        fi
     else
-        echo -e "ℹ️ El repositorio ya estaba presente en pacman.conf."
+        echo -e "${VERDE}[✓] El repositorio ya está configurado correctamente en pacman.conf.${NC}"
     fi
 
-    # 3. Instalación de componentes centrales del entorno
-    echo -e "--> Actualizando repositorios e instalando paquetes centrales..."
-    sudo pacman -Syu --noconfirm kineticwe-keyring kineticwe
+    # 3. Sincronizar bases de datos e instalar
+    echo -e "\n${AZUL}[+] Actualizando repositorios e instalando paquetes centrales...${NC}"
+    if sudo pacman -Syu --noconfirm kineticwe-keyring kineticwe; then
+        echo -e "${VERDE}[✓] Paquetes base instalados con éxito.${NC}"
+    else
+        echo -e "${ROJO}[X] Error durante la instalación de paquetes con pacman.${NC}"
+        pausar
+        return 1
+    fi
 
-    # 4. Instalación automatizada y asistente del Greeter Noctalia
-    echo -e "${VERDE}--> Instalando kineticwe-greeter de forma automatizada...${NC}"
-    sudo pacman -S --noconfirm kineticwe-greeter
-    
-    echo -e "--> Iniciando el asistente interactivo de configuración de Noctalia...${NC}"
-    kineticwe-setup-greeter
+    # 4. Componentes opcionales (Greeter Noctalia)
+    echo -e "${AZUL}=======================================================${NC}"
+    read -p "$(echo -e "${AMARILLO}¿Deseas instalar el Greeter Noctalia (pantalla de inicio)? [s/N]: ${NC}")" responder
+    if [[ "$responder" =~ ^[Ss]$ ]]; then
+        echo -e "\n${AZUL}[+] Instalando kineticwe-greeter...${NC}"
+        if sudo pacman -S --noconfirm kineticwe-greeter; then
+            echo -e "${VERDE}[✓] Greeter instalado. Iniciando asistente interactivo...${NC}"
+            kineticwe-setup-greeter
+        else
+            echo -e "${ROJO}[X] Error al instalar kineticwe-greeter.${NC}"
+        fi
+    else
+        echo -e "${AMARILLO}⚠ Instalación del Greeter omitida por el usuario.${NC}"
+    fi
 
-    echo -e "${VERDE}✔ ¡Proceso de KineticWE y Greeter finalizado con éxito!${NC}"
+    echo -e "\n${VERDE}🎉 ¡Proceso de instalación finalizado con éxito!${NC}"
     pausar
+    return 0
 }
-
-
 # ==============================================================================
 # OPCIÓN 3: RESTAURACIÓN DEL RICE (BACKUP DEL PENDRIVE)
 # ==============================================================================
