@@ -30,7 +30,6 @@ pausar() {
     echo -e "\n${AMARILLO}Presiona [Intro] para continuar...${NC}"
     read -r
 }
-
 # =====================================================================
 # BUCLE DEL MENÚ PRINCIPAL
 # =====================================================================
@@ -47,10 +46,11 @@ mostrar_menu() {
         echo -e " 4) Crear copia de seguridad de la personalización (Rice Local)"
         echo -e " 5) Reaplicar iconos personalizados en el Dock de Noctalia"
         echo -e " 6) Restaurar iconos originales del sistema (Deshacer y Limpiar)"
-        echo -e " 7) Salir"
+        echo -e " 7) Instalar Temas Visuales (Iconos Tela y Cursores Bibata)"
+        echo -e " 8) Salir"
         echo -e "${AZUL}=======================================================${NC}"
 
-        read -p "Selecciona una opción [1-7]: " opcion
+        read -p "Selecciona una opción [1-8]: " opcion
 
         case $opcion in
             1) opcion_1_herramientas_y_gaming ;;
@@ -59,7 +59,8 @@ mostrar_menu() {
             4) opcion_3_crear_backup_rice ;; # Llama a la función de copia de seguridad local
             5) opcion_4_aplicar_iconos_custom ;;
             6) opcion_5_restaurar_iconos_defecto ;;
-            7)
+            7) instalar_iconos_y_cursores ;;
+            8)
                 echo -e "\n${VERDE}¡Hasta luego! Saliendo limpiamente...${NC}"
                 exit 0
                 ;;
@@ -72,6 +73,76 @@ mostrar_menu() {
 }
 
 # ==============================================================================
+# OPCIÓN X: INSTALACIÓN CORE, LIMPIEZA DE ALACRITTY, GAMING Y RECURSOS VISUALES
+# ==============================================================================
+instalar_iconos_y_cursores() {
+    echo -e "\n${AMARILLO}[+] Iniciando la instalación de Temas Visuales (Tela y Bibata)...${NC}"
+
+    # 0. Asegurar la ruta moderna de iconos para el usuario local
+    mkdir -p ~/.local/share/icons
+
+    # 1. Instalación de Iconos Tela (Nivel Usuario)
+    echo -e "\n${AZUL}-> Descargando e instalando la última versión de Tela Icon Theme...${NC}"
+
+    # Limpiamos descargas anteriores en /tmp para evitar conflictos
+    rm -rf /tmp/Tela-icon-theme
+
+    # Definimos la URL rota con espacios a propósito para protegerla
+    URL_TELA_CON_ESPACIOS="https:// github.com / vinceliuice / Tela-icon-theme .git"
+    # Eliminamos todos los espacios en blanco de forma nativa en Bash
+    URL_TELA="${URL_TELA_CON_ESPACIOS// /}"
+
+    # Clonamos con la URL limpia
+    git clone "$URL_TELA" /tmp/Tela-icon-theme
+
+    # Forzamos permisos y ejecutamos solo si el clonado ha funcionado
+    if [ -f /tmp/Tela-icon-theme/install.sh ]; then
+        chmod +x /tmp/Tela-icon-theme/install.sh
+        /tmp/Tela-icon-theme/install.sh -d "$HOME/.local/share/icons"
+    else
+        echo -e "${ROJO}❌ Error: No se pudo descargar el instalador de iconos Tela.${NC}"
+    fi
+
+    # Limpiamos los archivos temporales de la instalación
+    rm -rf /tmp/Tela-icon-theme
+
+
+    # 2. Instalación de Cursores Bibata Modern (Nivel Usuario)
+    echo -e "\n${AZUL}-> Descargando e instalando la última versión de Cursores Bibata...${NC}"
+
+    # Eliminamos posibles archivos corruptos anteriores en /tmp
+    rm -f /tmp/Bibata-Modern-Classic.tar.xz /tmp/Bibata-Modern-Ice.tar.xz
+
+    # Definimos las URLs de los paquetes separadas por espacios
+    URL_CLASSIC_CON_ESPACIOS="https:// github.com / ful1e5 / Bibata_Cursor / releases / download / v2.0.7 / Bibata-Modern-Classic.tar.xz"
+    URL_ICE_CON_ESPACIOS="https:// github.com / ful1e5 / Bibata_Cursor / releases / download / v2.0.7 / Bibata-Modern-Ice.tar.xz"
+
+    # Limpiamos los espacios usando la propiedad de sustitución global (// /)
+    URL_CLASSIC="${URL_CLASSIC_CON_ESPACIOS// /}"
+    URL_ICE="${URL_ICE_CON_ESPACIOS// /}"
+
+    # Descargamos los paquetes oficiales usando las URLs seguras
+    curl -L "$URL_CLASSIC" -o /tmp/Bibata-Modern-Classic.tar.xz
+    curl -L "$URL_ICE" -o /tmp/Bibata-Modern-Ice.tar.xz
+
+    # Descomprimimos comprobando que los archivos existan y tengan tamaño
+    if [ -s /tmp/Bibata-Modern-Classic.tar.xz ] && [ -s /tmp/Bibata-Modern-Ice.tar.xz ]; then
+        tar -xf /tmp/Bibata-Modern-Classic.tar.xz -C "$HOME/.local/share/icons/"
+        tar -xf /tmp/Bibata-Modern-Ice.tar.xz -C "$HOME/.local/share/icons/"
+        echo -e "${VERDE}✔ Cursores desempaquetados correctamente.${NC}"
+    else
+        echo -e "${ROJO}❌ Error: Los archivos de cursores descargados están corruptos o vacíos.${NC}"
+    fi
+
+    # Limpiamos los archivos temporales de los cursores
+    rm -f /tmp/Bibata-Modern-Classic.tar.xz /tmp/Bibata-Modern-Ice.tar.xz
+
+
+    echo -e "\n${VERDE}✔ ¡Proceso de instalación finalizado!${NC}"
+    echo -e "${AMARILLO}Revisa los mensajes anteriores para confirmar que todo se descargó al 100%.${NC}"
+    pausar
+}
+# ==============================================================================
 # OPCIÓN 1: INSTALACIÓN CORE, LIMPIEZA DE ALACRITTY, GAMING Y RECURSOS VISUALES
 # ==============================================================================
 opcion_1_herramientas_y_gaming() {
@@ -82,7 +153,7 @@ opcion_1_herramientas_y_gaming() {
     # 1. Instalación de aplicaciones base (Pacman)
     echo -e "${AZUL}[+] Instalando Kitty, Fish, Nemo, Firefox y utilidades...${NC}"
     sudo pacman -S --needed --noconfirm \
-        kitty fish nemo file-roller discord firefox loupe gnome-text-editor flameshot
+        kitty fish nemo file-roller discord firefox loupe gnome-text-editor flameshot git curl
 
     # 2. Instalación de optimizaciones Gaming de CachyOS
     echo -e "${AZUL}[+] Aplicando meta-paquetes esenciales para Gaming de CachyOS...${NC}"
