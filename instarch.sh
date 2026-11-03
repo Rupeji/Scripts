@@ -48,10 +48,12 @@ mostrar_menu() {
         echo -e " 6) Restaurar iconos originales del sistema (Deshacer y Limpiar)"
         echo -e " 7) Instalar Temas Visuales (Iconos Tela y Cursores Bibata)"
         echo -e " 8) Aplicar Configuraciones Estéticas Premium (Dotfiles + Starship)"
-        echo -e " 9) Salir"
+        echo -e " 9) Crear copia de seguridad de la configuración de Firefox"
+        echo -e "10) Restaurar copia de seguridad de la configuración de Firefox"
+        echo -e "11) Salir"
         echo -e "${AZUL}=======================================================${NC}"
 
-        read -p "Selecciona una opción [1-9]: " opcion
+        read -p "Selecciona una opción [1-11]: " opcion
 
         case $opcion in
             1) opcion_1_herramientas_y_gaming ;;
@@ -62,7 +64,9 @@ mostrar_menu() {
             6) opcion_5_restaurar_iconos_defecto ;;
             7) instalar_iconos_y_cursores ;;
             8) aplicar_dotfiles_esteticos ;;
-            9)
+            9) hacer_backup_firefox ;;
+            10) restaurar_backup_firefox ;;
+            11)
                 echo -e "\n${VERDE}¡Hasta luego! Saliendo limpiamente...${NC}"
                 exit 0
                 ;;
@@ -73,7 +77,97 @@ mostrar_menu() {
         esac
     done
 }
+# ==============================================================================
+# MÓDULO 7: RESTAURACIÓN DE CONFIGURACIÓN DE FIREFOX
+# ==============================================================================
+restaurar_backup_firefox() {
+    echo -e "\n${AMARILLO}[+] Iniciando restauración de Firefox...${NC}"
 
+    # 0. Configuración de rutas estables
+    PERFIL_DIR="$HOME/.config/mozilla/firefox/69xa30zz.default-release"
+    BACKUP_DIR="$HOME/firefox_backups"
+
+    # 1. Localizar de forma automatizada el backup más reciente
+    ULTIMO_BACKUP=$(ls -t "$BACKUP_DIR"/firefox_config_*.tar.gz 2>/dev/null | head -n 1)
+
+    # 2. Control de existencia de ficheros
+    if [ -z "$ULTIMO_BACKUP" ]; then
+        echo -e "${ROJO}❌ Error: No se encontró ninguna copia de seguridad en $BACKUP_DIR${NC}"
+        pausar
+        return 1
+    fi
+
+    # 3. Control preventivo: Verificar si Firefox está en ejecución
+    if pgrep -x "firefox" > /dev/null || pgrep -x "firefox-bin" > /dev/null; then
+        echo -e "${ROJO}❌ Error: Firefox está en ejecución. Ciérralo antes de sobrescribir los datos.${NC}"
+        pausar
+        return 1
+    fi
+
+    # 4. Confirmación interactiva de seguridad estilizada
+    echo -e "${AMARILLO}⚠ ATENCIÓN: Se restaurará el siguiente archivo:${NC}"
+    echo -e "${AZUL}📄 $(basename "$ULTIMO_BACKUP")${NC}"
+    echo -e "${ROJO}Esto borrará y reemplazará la configuración actual de tu perfil.${NC}"
+    echo -ne "${AMARILLO}¿Estás seguro de que deseas continuar? (s/N): ${NC}"
+    read -n 1 -r CONFIRMACION
+    echo ""
+
+    if [[ ! $CONFIRMACION =~ ^[Ss]$ ]]; then
+        echo -e "${ROJO}❌ Operación cancelada por el usuario.${NC}"
+        pausar
+        return 0
+    fi
+
+    # 5. Limpieza segura y extracción
+    echo -e "${AZUL}-> Limpiando el perfil actual de forma segura...${NC}"
+    rm -rf "${PERFIL_DIR:?}"/* 
+
+    echo -e "${AZUL}-> Extrayendo archivos desde la copia de seguridad...${NC}"
+    tar -xzf "$ULTIMO_BACKUP" -C "$PERFIL_DIR"
+
+    if [ $? -eq 0 ]; then
+        echo -e "\n${VERDE}✔ ¡Perfil restaurado con éxito total! Tu Firefox vuelve al estado del backup.${NC}"
+    else
+        echo -e "\n${ROJO}❌ Ocurrió un fallo inesperado durante la descompresión del archivo.${NC}"
+    fi
+
+    pausar
+}
+# ==============================================================================
+# MÓDULO 6: BACKUP DE CONFIGURACIÓN DE FIREFOX
+# ==============================================================================
+hacer_backup_firefox() {
+    echo -e "\n${AMARILLO}[+] Iniciando copia de seguridad de Firefox...${NC}"
+
+    # 0. Configuración de rutas estables
+    PERFIL_DIR="$HOME/.config/mozilla/firefox/69xa30zz.default-release"
+    BACKUP_DIR="$HOME/firefox_backups"
+    FECHA=$(date +%Y%m%d_%H%M%S)
+    BACKUP_NAME="firefox_config_$FECHA.tar.gz"
+
+    # 1. Asegurar directorio de destino
+    mkdir -p "$BACKUP_DIR"
+
+    # 2. Control preventivo: Verificar si Firefox está en ejecución
+    if pgrep -x "firefox" > /dev/null || pgrep -x "firefox-bin" > /dev/null; then
+        echo -e "${ROJO}❌ Error: Firefox está abierto. Ciérralo por completo para evitar copias corruptas.${NC}"
+        pausar
+        return 1
+    fi
+
+    # 3. Compresión y guardado
+    echo -e "${AZUL}-> Empaquetando y comprimiendo el perfil activo...${NC}"
+    tar -czf "$BACKUP_DIR/$BACKUP_NAME" -C "$PERFIL_DIR" .
+
+    if [ $? -eq 0 ]; then
+        echo -e "\n${VERDE}✔ ¡Éxito! Copia de seguridad creada correctamente.${NC}"
+        echo -e "${AZUL}📂 Ubicación:${NC} $BACKUP_DIR/$BACKUP_NAME"
+    else
+        echo -e "\n${ROJO}❌ Ocurrió un error crítico al intentar empaquetar el perfil.${NC}"
+    fi
+
+    pausar
+}
 # ==============================================================================
 # MÓDULO 5: CONFIGURACIÓN DE DOTFILES (PALETA PREMIUM + PROMPT PERSONALIZADO)
 # ==============================================================================
