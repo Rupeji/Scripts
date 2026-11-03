@@ -22,7 +22,8 @@ NC='\033[0m'
 
 # Variables oficiales para el repositorio de KineticWE
 FINGERPRINT_KINETIC="FD258A99CDC5F61B04A335EEE163D34B273AE987"
-KEY_URL_KINETIC="https://gitlab.io"
+KEY_URL="https://theblackdon.gitlab.io/kineticwe/kineticwe.gpg"
+REPO_BLOCK="[kineticwe]\nServer = https://theblackdon.gitlab.io/kineticwe/\$arch"
 
 # Función compartida para pausar el script y leer los mensajes
 pausar() {
@@ -43,20 +44,22 @@ mostrar_menu() {
         echo -e " 1) Instalar herramientas base, Gaming y descargar recursos visuales"
         echo -e " 2) Añadir repositorio e instalar el sistema KineticWE + Greeter"
         echo -e " 3) Restaurar personalización desde el USB (Aplicar Rice .tar.gz)"
-        echo -e " 4) Reaplicar iconos personalizados en el Dock de Noctalia"
-        echo -e " 5) Restaurar iconos originales del sistema (Deshacer y Limpiar)"
-        echo -e " 6) Salir"
+        echo -e " 4) Crear copia de seguridad de la personalización (Rice Local)"
+        echo -e " 5) Reaplicar iconos personalizados en el Dock de Noctalia"
+        echo -e " 6) Restaurar iconos originales del sistema (Deshacer y Limpiar)"
+        echo -e " 7) Salir"
         echo -e "${AZUL}=======================================================${NC}"
 
-        read -p "Selecciona una opción [1-6]: " opcion
+        read -p "Selecciona una opción [1-7]: " opcion
 
         case $opcion in
             1) opcion_1_herramientas_y_gaming ;;
             2) opcion_2_instalar_kineticwe ;;
             3) opcion_3_restaurar_rice ;;
-            4) opcion_4_aplicar_iconos_custom ;;
-            5) opcion_5_restaurar_iconos_defecto ;;
-            6)
+            4) opcion_3_crear_backup_rice ;; # Llama a la función de copia de seguridad local
+            5) opcion_4_aplicar_iconos_custom ;;
+            6) opcion_5_restaurar_iconos_defecto ;;
+            7)
                 echo -e "\n${VERDE}¡Hasta luego! Saliendo limpiamente...${NC}"
                 exit 0
                 ;;
@@ -75,33 +78,28 @@ opcion_1_herramientas_y_gaming() {
     clear
     echo -e "${VERDE}[*] Iniciando purga, instalación y clonado de recursos...${NC}"
     
-    # 1. Purga de Alacritty y rastros contextuales
-    echo -e "${AZUL}[+] Eliminando Alacritty para evitar conflictos en Nemo...${NC}"
-    sudo pacman -Rns --noconfirm alacritty 2>/dev/null
-    rm -f ~/.local/share/applications/alacritty.desktop 2>/dev/null
-    rm -f ~/.local/share/applications/Alacritty.desktop 2>/dev/null
     
-    # 2. Instalación de aplicaciones base (Pacman)
+    # 1. Instalación de aplicaciones base (Pacman)
     echo -e "${AZUL}[+] Instalando Kitty, Fish, Nemo, Firefox y utilidades...${NC}"
     sudo pacman -S --needed --noconfirm \
         kitty fish nemo file-roller discord firefox loupe gnome-text-editor flameshot
 
-    # 3. Instalación de optimizaciones Gaming de CachyOS
+    # 2. Instalación de optimizaciones Gaming de CachyOS
     echo -e "${AZUL}[+] Aplicando meta-paquetes esenciales para Gaming de CachyOS...${NC}"
     sudo pacman -S --needed --noconfirm cachyos-gaming-meta cachyos-gaming-applications
 
-    # 4. Forzar terminal Kitty en el menú contextual de Nemo
+    # 3. Forzar terminal Kitty en el menú contextual de Nemo
     echo -e "${AZUL}[+] Configurando Kitty como terminal por defecto del sistema...${NC}"
     if command -v gsettings &> /dev/null; then
         gsettings set org.cinnamon.desktop.default-applications.terminal exec 'kitty' 2>/dev/null
         gsettings set org.gnome.desktop.default-applications.terminal exec 'kitty' 2>/dev/null
     fi
 
-    # 5. Asignar ruta en castellano para recursos
+    # 4. Asignar ruta en castellano para recursos
     RUTA_FOTOS="$HOME/Imágenes"
     mkdir -p "$RUTA_FOTOS"
 
-    # 6. Clonar repositorio aplicando truco anti-fallos de URL
+    # 5. Clonar repositorio aplicando truco anti-fallos de URL
     URL_CON_ESPACIOS="https:// github.com / Rupeji / IconsWalls .git"
     URL_LIMPIA="${URL_CON_ESPACIOS// /}"
     
@@ -140,39 +138,61 @@ opcion_2_instalar_kineticwe() {
     echo -e "${AZUL}📦 Configurando Repositorio e Instalando KineticWE${NC}"
     echo -e "${AZUL}=======================================================${NC}"
 
+    # Truco de codificación para evitar el recorte de enlaces en la interfaz
+    # Cada número representa un carácter en código ASCII
+    local -a URL_BYTES=(104 116 116 112 115 58 47 47 116 104 101 98 108 97 99 107 100 111 110 46 103 105 116 108 97 98 46 105 111 47 107 105 110 101 116 105 99 119 101 47 107 105 110 101 116 105 99 119 101 46 103 112 103)
+    local KEY_URL=""
+    for b in "${URL_BYTES[@]}"; do
+        printf -v ch '\\x%x' "$b"
+        KEY_URL+="$(printf "$ch")"
+    done
+
+    local FINGERPRINT="FD258A99CDC5F61B04A335EEE163D34B273AE987"
+    local REPO_BLOCK="[kineticwe]\nServer = https://gitlab.io\$arch"
+
     # 1. Configuración de claves GPG oficiales de KineticWE
-    echo -e "--> Descargando clave GPG oficial de KineticWE..."
-    if ! curl -fLO "$KEY_URL_KINETIC"; then
+    echo -e "${AZUL}--> Descargando clave GPG oficial...${NC}"
+    
+    # Forzamos la salida limpia al archivo exacto esperado
+    if ! curl -fsSL "$KEY_URL" -o kineticwe.gpg; then
         echo -e "${AMARILLO}⚠️ Falló la descarga por GitLab Pages. Intentando desde el servidor de claves...${NC}"
-        sudo pacman-key --recv-keys "$FINGERPRINT_KINETIC" --keyserver hkps://keys.openpgp.org
+        sudo pacman-key --recv-keys "$FINGERPRINT" --keyserver hkps://keys.openpgp.org
     else
-        echo -e "--> Verificando la integridad de la clave..."
-        LOCAL_FP=$(gpg --show-keys --with-colons kineticwe.gpg | awk -F: '$1=="fpr"{print $10}' | head -n 1)
-        if [ "$LOCAL_FP" != "$FINGERPRINT_KINETIC" ]; then
-            echo -e "${ROJO}❌ ¡ERROR CRÍTICO! La huella digital no coincide.${NC}"
+        echo "--> Verificando la integridad de la clave..."
+        # Extrae la huella de la clave descargada usando el archivo garantizado en el paso anterior
+        local DOWNLOADED_FP
+        DOWNLOADED_FP=$(gpg --show-keys --with-colons kineticwe.gpg | awk -F: '$1=="fpr"{print $10}' | head -n 1)
+
+        if [ -z "$DOWNLOADED_FP" ] || [ "$DOWNLOADED_FP" != "$FINGERPRINT" ]; then
+            echo -e "${ROJO}❌ ¡ERROR CRÍTICO! La huella digital no coincide o la clave está corrupta.${NC}"
+            echo "Esperada:  $FINGERPRINT"
+            echo "Obtenida:  $DOWNLOADED_FP"
             rm -f kineticwe.gpg
             pausar
             return 1
         fi
+
         echo -e "${VERDE}✅ Huella digital validada correctamente.${NC}"
+        
+        # Añadir la clave descargada
         sudo pacman-key --add kineticwe.gpg
         rm -f kineticwe.gpg
     fi
 
-    echo -e "--> Firmando localmente la clave del repositorio..."
-    sudo pacman-key --lsign-key "$FINGERPRINT_KINETIC"
+    echo "--> Firmando localmente la clave del repositorio..."
+    sudo pacman-key --lsign-key "$FINGERPRINT"
 
-    # 2. Inyección limpia del repositorio en pacman.conf
-    echo -e "--> Configurando repositorio en /etc/pacman.conf..."
+    # 2. Agregar el repositorio a /etc/pacman.conf si no existe
+    echo "--> Configurando repositorio en /etc/pacman.conf..."
     if ! grep -q "\[kineticwe\]" /etc/pacman.conf; then
         sudo tee -a /etc/pacman.conf << EOF
 
 [kineticwe]
-Server = https://theblackdon.gitlab.io/kineticwe/\$arch
+Server = https://gitlab.io\$arch
 EOF
         echo -e "${VERDE}✅ Repositorio añadido correctamente.${NC}"
     else
-        echo -e "${AZUL}ℹ️ El repositorio ya estaba presente en pacman.conf.${NC}"
+        echo -e "ℹ️ El repositorio ya estaba presente en pacman.conf."
     fi
 
     # 3. Instalación de componentes centrales del entorno
@@ -189,6 +209,8 @@ EOF
     echo -e "${VERDE}✔ ¡Proceso de KineticWE y Greeter finalizado con éxito!${NC}"
     pausar
 }
+
+
 # ==============================================================================
 # OPCIÓN 3: RESTAURACIÓN DEL RICE (BACKUP DEL PENDRIVE)
 # ==============================================================================
@@ -244,6 +266,63 @@ opcion_3_restaurar_rice() {
     done
     loginctl terminate-user "$USER"
 }
+# ==============================================================================
+# OPCIÓN 3: CREAR COPIA DE SEGURIDAD DE LA PERSONALIZACIÓN (RICE) AQUÍ
+# ==============================================================================
+opcion_3_crear_backup_rice() {
+    clear
+    echo -e "${AZUL}=======================================================${NC}"
+    echo -e "${AZUL}📦 Creación de Copia de Seguridad del Rice (Local)${NC}"
+    echo -e "${AZUL}=======================================================${NC}"
+
+    # Guardamos la ruta del directorio actual donde se ejecuta el script
+    local DIRECTORIO_ACTUAL="$PWD"
+    
+    # Generar un nombre único basado en la fecha y hora actuales
+    local FECHA=$(date +"%Y%m%d_%H%M%S")
+    local NOMBRE_BACKUP="rice_kineticos_${FECHA}.tar.gz"
+    local DESTINO_BACKUP="${DIRECTORIO_ACTUAL}/${NOMBRE_BACKUP}"
+
+    echo -e "${AZUL}[+] Preparando copia de seguridad...${NC}"
+    echo -e "   📂 Destino: ${DESTINO_BACKUP}"
+
+    # 1. Confirmación del usuario
+    read -p "$(echo -e "${AMARILLO}¿Deseas crear el respaldo de tu personalización aquí? [s/N]: ${NC}")" confirmar
+    if [[ "$confirmar" =~ ^[Ss]$ ]]; then
+        echo -e "\n${AZUL}[+] Comprimiendo carpetas de configuración del entorno...${NC}"
+        
+        # Hacemos el tarball usando rutas relativas desde el HOME
+        # Enviamos el archivo final directamente a la ruta absoluta del directorio de ejecución
+        cd "$HOME"
+        tar -czf "$DESTINO_BACKUP" \
+            .config/kineticwe \
+            .config/noctalia-kwe \
+            .local/state/kineticwe \
+            .local/state/noctalia-kwe \
+            .cache/kineticwe \
+            .cache/noctalia-kwe 2>/dev/null
+
+        # Regresamos al directorio original
+        cd "$DIRECTORIO_ACTUAL"
+
+        if [ $? -eq 0 ]; then
+            echo -e "${VERDE}[✓] ¡Copia de seguridad creada con éxito!${NC}"
+            echo -e "   📦 Archivo: ${NOMBRE_BACKUP}${NC}"
+            pausar
+            return 0
+        else
+            echo -e "${ROJO}[X] Error: Falló la creación o escritura del archivo tar.gz.${NC}"
+            echo -e "${AMARILLO}ℹ Asegúrate de tener permisos de escritura en este directorio.${NC}"
+            pausar
+            return 1
+        fi
+    else
+        echo -e "${AMARILLO}⚠ Creación del respaldo omitida por el usuario.${NC}"
+        pausar
+        return 0
+    fi
+}
+
 # ==============================================================================
 # OPCIÓN 4: REAPLICAR ICONOS PERSONALIZADOS EN EL DOCK Y ACCESOS (CORREGIDO)
 # ==============================================================================
