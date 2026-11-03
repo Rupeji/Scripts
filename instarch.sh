@@ -190,7 +190,7 @@ aplicar_dotfiles_esteticos() {
 
     # 3. Descarga e instalación manual de JetBrainsMono Nerd Font
     echo -e "\n${AZUL}-> Descargando e instalando JetBrainsMono Nerd Font...${NC}"
-    wget -q --show-progress https://github.com -O /tmp/JetBrainsMono.zip
+    wget -q --show-progress https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip -O /tmp/JetBrainsMono.zip -O /tmp/JetBrainsMono.zip
 
     if [ $? -eq 0 ]; then
         unzip -q -o /tmp/JetBrainsMono.zip -d ~/.local/share/fonts/JetBrainsMono
