@@ -168,7 +168,7 @@ opcion_2_instalar_kineticwe() {
         sudo tee -a /etc/pacman.conf << EOF
 
 [kineticwe]
-Server = https://gitlab.io\$arch
+Server = https://theblackdon.gitlab.io/kineticwe/\$arch
 EOF
         echo -e "${VERDE}✅ Repositorio añadido correctamente.${NC}"
     else
