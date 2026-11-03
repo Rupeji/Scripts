@@ -47,10 +47,11 @@ mostrar_menu() {
         echo -e " 5) Reaplicar iconos personalizados en el Dock de Noctalia"
         echo -e " 6) Restaurar iconos originales del sistema (Deshacer y Limpiar)"
         echo -e " 7) Instalar Temas Visuales (Iconos Tela y Cursores Bibata)"
-        echo -e " 8) Salir"
+        echo -e " 8) Aplicar Configuraciones Estéticas Premium (Dotfiles + Starship)"
+        echo -e " 9) Salir"
         echo -e "${AZUL}=======================================================${NC}"
 
-        read -p "Selecciona una opción [1-8]: " opcion
+        read -p "Selecciona una opción [1-9]: " opcion
 
         case $opcion in
             1) opcion_1_herramientas_y_gaming ;;
@@ -60,7 +61,8 @@ mostrar_menu() {
             5) opcion_4_aplicar_iconos_custom ;;
             6) opcion_5_restaurar_iconos_defecto ;;
             7) instalar_iconos_y_cursores ;;
-            8)
+            8) aplicar_dotfiles_esteticos ;;
+            9)
                 echo -e "\n${VERDE}¡Hasta luego! Saliendo limpiamente...${NC}"
                 exit 0
                 ;;
@@ -70,6 +72,69 @@ mostrar_menu() {
                 ;;
         esac
     done
+}
+
+# ==============================================================================
+# MÓDULO 5: CONFIGURACIÓN DE DOTFILES (PALETA PREMIUM + PROMPT PERSONALIZADO)
+# ==============================================================================
+aplicar_dotfiles_esteticos() {
+    echo -e "\n${AMARILLO}[+] Generando configuraciones estéticas premium para la consola...${NC}"
+
+    # 0. Obtener la ruta exacta desde donde se está ejecutando este script
+    DIR_ORIGEN="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+    # 1. Instalar Starship nativamente usando Pacman (Arch Linux Extra)
+    echo -e "${AZUL}-> Instalando Starship desde los repositorios de Arch Linux...${NC}"
+    sudo pacman -S --noconfirm starship
+
+    # 2. Asegurar directorios locales requeridos
+    mkdir -p ~/.local/bin
+    mkdir -p ~/.config/kitty
+    mkdir -p ~/.config/fish
+    mkdir -p ~/.local/share/fonts/JetBrainsMono
+
+    # 3. Descarga e instalación manual de JetBrainsMono Nerd Font
+    echo -e "\n${AZUL}-> Descargando e instalando JetBrainsMono Nerd Font...${NC}"
+    wget -q --show-progress https://github.com -O /tmp/JetBrainsMono.zip
+
+    if [ $? -eq 0 ]; then
+        unzip -q -o /tmp/JetBrainsMono.zip -d ~/.local/share/fonts/JetBrainsMono
+        rm -f /tmp/JetBrainsMono.zip
+        fc-cache -f
+        echo -e "${VERDE}✔ ¡Éxito! JetBrainsMono Nerd Font instalada correctamente.${NC}"
+    else
+        echo -e "${ROJO}❌ Ocurrió un error al intentar descargar la fuente.${NC}"
+    fi
+
+    # 4. Copiar archivos de configuración desde la ubicación del script
+    echo -e "\n${AZUL}-> Copiando archivos de configuración locales...${NC}"
+
+    # Copiar kitty.conf
+    if [ -f "$DIR_ORIGEN/kitty.conf" ]; then
+        cp "$DIR_ORIGEN/kitty.conf" ~/.config/kitty/kitty.conf
+        echo -e "${VERDE}✔ kitty.conf copiado correctamente.${NC}"
+    else
+        echo -e "${AMARILLO}⚠ Advertencia: No se encontró kitty.conf en $DIR_ORIGEN. Saltando...${NC}"
+    fi
+
+    # Copiar starship.toml
+    if [ -f "$DIR_ORIGEN/starship.toml" ]; then
+        cp "$DIR_ORIGEN/starship.toml" ~/.config/starship.toml
+        echo -e "${VERDE}✔ starship.toml copiado correctamente.${NC}"
+    else
+        echo -e "${AMARILLO}⚠ Advertencia: No se encontró starship.toml en $DIR_ORIGEN. Saltando...${NC}"
+    fi
+
+    # Copiar config.fish
+    if [ -f "$DIR_ORIGEN/config.fish" ]; then
+        cp "$DIR_ORIGEN/config.fish" ~/.config/fish/config.fish
+        echo -e "${VERDE}✔ config.fish copiado correctamente.${NC}"
+    else
+        echo -e "${AMARILLO}⚠ Advertencia: No se encontró config.fish en $DIR_ORIGEN. Saltando...${NC}"
+    fi
+
+    echo -e "\n${VERDE}✔ ¡Fuentes e instalables listos, y dotfiles copiados por completo!${NC}"
+    pausar
 }
 
 # ==============================================================================
