@@ -85,7 +85,7 @@ restaurar_backup_firefox() {
 
     # 0. Configuración de rutas estables
     PERFIL_DIR="$HOME/.config/mozilla/firefox/69xa30zz.default-release"
-    BACKUP_DIR="$HOME/firefox_backups"
+    BACKUP_DIR="$PWD/firefox_backups"
 
     # 1. Localizar de forma automatizada el backup más reciente
     ULTIMO_BACKUP=$(ls -t "$BACKUP_DIR"/firefox_config_*.tar.gz 2>/dev/null | head -n 1)
@@ -133,6 +133,7 @@ restaurar_backup_firefox() {
 
     pausar
 }
+
 # ==============================================================================
 # MÓDULO 6: BACKUP DE CONFIGURACIÓN DE FIREFOX
 # ==============================================================================
@@ -141,7 +142,7 @@ hacer_backup_firefox() {
 
     # 0. Configuración de rutas estables
     PERFIL_DIR="$HOME/.config/mozilla/firefox/69xa30zz.default-release"
-    BACKUP_DIR="$HOME/firefox_backups"
+    BACKUP_DIR="$PWD/firefox_backups"
     FECHA=$(date +%Y%m%d_%H%M%S)
     BACKUP_NAME="firefox_config_$FECHA.tar.gz"
 
