@@ -32,6 +32,7 @@ pausar() {
     echo -e "\n${AMARILLO}Presiona [Intro] para continuar...${NC}"
     read -r
 }
+
 # =====================================================================
 # PARTE 1: FUNCIÓN DE INSTALACIÓN COMPLETA
 # =====================================================================
@@ -40,33 +41,9 @@ ejecutar_instalacion_completa() {
     echo -e "${AZUL}🚀 Iniciando Instalación Completa Post-Instalación (GTK)${NC}"
     echo -e "${AZUL}=======================================================${NC}"
 
-    # 1. POLKIT FIX (MATE)
-    echo -e "\n${AMARILLO}[+] Paso 1: Configurando Agente Polkit para MATE...${NC}"
-    if [ ! -f "$AGENTE_BIN" ]; then
-        echo -e "${ROJO}❌ Error crítico: No se encontró el Agente Polkit de MATE en $AGENTE_BIN.${NC}"
-        pausar
-        return 1
-    fi
-
-    mkdir -p "$DIRECTORIO_AUTOSTART"
-    cat << EOF > "$ARCHIVO_DESKTOP"
-[Desktop Entry]
-Type=Application
-Name=MATE Polkit Authentication Agent
-Comment=Motor de contraseñas de administrador ligero en GTK3
-Exec=$AGENTE_BIN
-Terminal=false
-EOF
-    chmod +x "$ARCHIVO_DESKTOP"
-    echo -e "${VERDE}✔ Lanzador Polkit de MATE configurado correctamente.${NC}"
-
-    if pgrep -f "$(basename "$AGENTE_BIN")" > /dev/null; then
-        echo -e "${AZUL}ℹ El agente de MATE ya se encuentra corriendo en segundo plano.${NC}"
-    else
-        "$AGENTE_BIN" >/dev/null 2>&1 &
-        echo -e "${VERDE}✔ ¡Agente Polkit de MATE iniciado con éxito en segundo plano!${NC}"
-    fi
-
+    # 1. ASOCIACIÓN DE ENTORNO (NEMO Y KITTY)
+    echo -e "\n${AMARILLO}[+] Paso 1: Configurando terminal e interfaz de Nemo...${NC}"
+    
     # Forzar a Nemo a abrir el clic derecho con tu terminal Kitty e iconos de Noctalia
     if command -v gsettings &> /dev/null; then
         gsettings set org.cinnamon.desktop.default-applications.terminal exec 'kitty'
@@ -74,7 +51,6 @@ EOF
         gsettings set org.cinnamon.desktop.interface icon-theme 'Adwaita'
         echo -e "${VERDE}✔ Tema de iconos Adwaita asignado a Nemo con éxito.${NC}"
     fi
-
     # 2. RESTAURACIÓN RICE
     echo -e "\n${AMARILLO}[+] Paso 2: Preparando la restauración del entorno...${NC}"
     if [ -n "$(ls -A "$RUTA_PENDRIVE"/rice_kineticos_*.tar.gz 2>/dev/null)" ]; then
@@ -147,6 +123,7 @@ EOF
     for i in {5..1}; do echo -e "${AMARILLO}$i...${NC}"; sleep 1; done
     reboot
 }
+
 # =====================================================================
 # PARTE 2: FUNCIONES DE SOPORTE Y DESARROLLO DE LA ISO
 # =====================================================================
@@ -204,7 +181,6 @@ restaurar_iconos_defecto() {
     fi
     pausar
 }
-
 submenu_cocinar_iso() {
     while true; do
         clear
@@ -297,6 +273,7 @@ submenu_cocinar_iso() {
         esac
     done
 }
+
 # =====================================================================
 # BUCLE DEL MENÚ PRINCIPAL
 # =====================================================================
