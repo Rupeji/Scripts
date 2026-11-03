@@ -25,12 +25,73 @@ RUTA_ICONOS="$RUTA_PENDRIVE/Iconos"
 
 ARCHIVOS_DESKTOP=("com.discordapp.Discord.desktop" "nemo.desktop" "kitty.desktop" "org.mozilla.firefox.desktop" "steam.desktop")
 ARCHIVOS_ICONO=("scribcord.png" "scribder.png" "Scribbled_Kitty.png" "scribfox.png" "scribsteam.png")
-RUTAS_SUGERIDAS=("/var/lib/flatpak/exports/share/applications" "/usr/share/applications" "/usr/share/applications" "/var/lib/flatpak/exports/share/applications" "/usr/share/applications")
 
 # Función auxiliar para pausar los menús
 pausar() {
     echo -e "\n${AMARILLO}Presiona [Intro] para continuar...${NC}"
     read -r
+}
+
+# =====================================================================
+# FUNCIÓN COMPARTIDA: PROCESAR E INSTALAR ICONOS
+# =====================================================================
+
+aplicar_iconos_custom() {
+    echo -e "\n${AMARILLO}[+] Copiando y reaplicando iconos en el almacenamiento local...${NC}"
+    local A_MENOS_UNO_CAMBIADO=false
+    local RUTA_LOCAL_ICONOS="$HOME/.local/share/icons"
+
+    if [ -d "$RUTA_ICONOS" ]; then
+        # Crear directorios locales esenciales si no existen
+        mkdir -p "$RUTA_LOCAL_APPS"
+        mkdir -p "$RUTA_LOCAL_ICONOS"
+        
+        # PASO CLAVE: Copiar los iconos dentro de tu HOME para que Flatpak no los bloquee
+        cp "$RUTA_ICONOS"/*.png "$RUTA_LOCAL_ICONOS/" 2>/dev/null
+
+        for i in "${!ARCHIVOS_DESKTOP[@]}"; do
+            local desktop_file="${ARCHIVOS_DESKTOP[$i]}"
+            local icono_file="${ARCHIVOS_ICONO[$i]}"
+            
+            echo -e "${AZUL}Procesando: ${desktop_file}...${NC}"
+
+            if [ ! -f "$RUTA_LOCAL_ICONOS/$icono_file" ]; then
+                echo -e "${AMARILLO}  ⚠ El archivo de icono '$icono_file' no se pudo copiar al almacenamiento local.${NC}"
+                continue
+            fi
+
+            # Rastreo exhaustivo en el sistema atómico
+            local ruta_detectada=$(find /var/lib/flatpak/exports/share/applications/ \
+                                 /var/lib/flatpak/app/ \
+                                 "$HOME/.local/share/flatpak/" \
+                                 "$HOME/.local/share/applications/" \
+                                 /usr/share/applications/ \
+                                 -name "$desktop_file" -print -quit 2>/dev/null)
+
+            if [ -n "$ruta_detectada" ] && [ -f "$ruta_detectada" ]; then
+                if [ "$ruta_detectada" != "$RUTA_LOCAL_APPS/$desktop_file" ]; then
+                    cp "$ruta_detectada" "$RUTA_LOCAL_APPS/"
+                    echo -e "  -> Enlazando y clonando archivo original a espacio de usuario."
+                fi
+                
+                # Modificación insensible a mayúsculas/minúsculas para asegurar el cambio
+                sed -i "s|^[Ii][Cc][Oo][Nn]=.*|Icon=${RUTA_LOCAL_ICONOS}/${icono_file}|" "$RUTA_LOCAL_APPS/$desktop_file"
+                echo -e "  ${VERDE}✔ Icono modificado correctamente en la ruta local.${NC}"
+                A_MENOS_UNO_CAMBIADO=true
+            else
+                echo -e "  ${ROJO}❌ Error: No se pudo localizar el archivo del sistema para '$desktop_file'.${NC}"
+            fi
+        done
+    else
+        echo -e "${ROJO}❌ Error crítico: La carpeta '$RUTA_ICONOS' no fue detectada en el USB.${NC}"
+    fi
+
+    if [ "$A_MENOS_UNO_CAMBIADO" = true ]; then
+        echo -e "\n${AZUL}[+] Forzando actualización de la base de datos de accesos...${NC}"
+        update-desktop-database "$RUTA_LOCAL_APPS" &>/dev/null
+        # Forzar al sistema de archivos a escribir los cambios en disco de inmediato
+        sync
+    fi
 }
 
 # =====================================================================
@@ -44,13 +105,13 @@ ejecutar_instalacion_completa() {
     # 1. ASOCIACIÓN DE ENTORNO (NEMO Y KITTY)
     echo -e "\n${AMARILLO}[+] Paso 1: Configurando terminal e interfaz de Nemo...${NC}"
     
-    # Forzar a Nemo a abrir el clic derecho con tu terminal Kitty e iconos de Noctalia
     if command -v gsettings &> /dev/null; then
         gsettings set org.cinnamon.desktop.default-applications.terminal exec 'kitty'
         echo -e "${VERDE}✔ Asociación de Nemo con Kitty configurada en el sistema.${NC}"
         gsettings set org.cinnamon.desktop.interface icon-theme 'Adwaita'
         echo -e "${VERDE}✔ Tema de iconos Adwaita asignado a Nemo con éxito.${NC}"
     fi
+
     # 2. RESTAURACIÓN RICE
     echo -e "\n${AMARILLO}[+] Paso 2: Preparando la restauración del entorno...${NC}"
     if [ -n "$(ls -A "$RUTA_PENDRIVE"/rice_kineticos_*.tar.gz 2>/dev/null)" ]; then
@@ -85,55 +146,23 @@ ejecutar_instalacion_completa() {
     fi
 
     # 3. APLICAR ICONOS CUSTOM
-    echo -e "\n${AMARILLO}[+] Paso 3: Reaplicando iconos personalizados...${NC}"
-    A_MENOS_UNO_CAMBIADO=false
-
-    if [ -d "$RUTA_ICONOS" ]; then
-        for i in "${!ARCHIVOS_DESKTOP[@]}"; do
-            desktop_file="${ARCHIVOS_DESKTOP[$i]}"
-            icono_file="${ARCHIVOS_ICONO[$i]}"
-            ruta_origen="${RUTAS_SUGERIDAS[$i]}"
-
-            if [ -f "$RUTA_ICONOS/$icono_file" ]; then
-                if [ ! -f "$ruta_origen/$desktop_file" ]; then
-                    ruta_detectada=$(find /var/lib/flatpak/ ~/.local/share/ /usr/share/applications/ -name "$desktop_file" -print -quit 2>/dev/null)
-                    [ -n "$ruta_detectada" ] && ruta_origen=$(dirname "$ruta_detectada")
-                fi
-
-                if [ -f "$ruta_origen/$desktop_file" ]; then
-                    mkdir -p "$RUTA_LOCAL_APPS"
-                    if [ "$ruta_origen" != "$RUTA_LOCAL_APPS" ]; then
-                        echo -e "${AZUL} -> Enlazando icono custom a ${VERDE}${desktop_file}${NC}"
-                        cp "$ruta_origen/$desktop_file" "$RUTA_LOCAL_APPS/"
-                    else
-                        echo -e "${AZUL} -> Modificando icono existente en ${VERDE}${desktop_file}${NC}"
-                    fi
-                    sed -i "s|^Icon=.*|Icon=${RUTA_ICONOS}/${icono_file}|" "$RUTA_LOCAL_APPS/$desktop_file"
-                    A_MENOS_UNO_CAMBIADO=true
-                fi
-            fi
-        done
-    fi
-
-    if [ "$A_MENOS_UNO_CAMBIADO" = true ]; then
-        update-desktop-database "$RUTA_LOCAL_APPS" &>/dev/null
-    fi
+    echo -e "\n${AMARILLO}[+] Paso 3: Lanzando actualización de iconos...${NC}"
+    aplicar_iconos_custom
 
     echo -e "\n${VERDE}🎉 ¡Proceso completado! Reiniciando en 5 segundos...${NC}"
     for i in {5..1}; do echo -e "${AMARILLO}$i...${NC}"; sleep 1; done
     reboot
 }
-
 # =====================================================================
 # PARTE 2: FUNCIONES DE SOPORTE Y DESARROLLO DE LA ISO
 # =====================================================================
 respaldar_rice_kinetic() {
     echo -e "\n${AMARILLO}[+] Iniciando copia de seguridad de tu personalización (Rice)...${NC}"
-    Archivo_Backup="$RUTA_PENDRIVE/rice_kineticos_$(date +%Y%m%d_%H%M%S).tar.gz"
+    local Archivo_Backup="$RUTA_PENDRIVE/rice_kineticos_$(date +%Y%m%d_%H%M%S).tar.gz"
 
     if [ -d "$HOME/.config/kineticwe" ]; then
         cd "$HOME" || return 1
-        RUTAS_A_COPIAR=".config/kineticwe"
+        local RUTAS_A_COPIAR=".config/kineticwe"
         [ -d ".config/noctalia" ] && RUTAS_A_COPIAR="$RUTAS_A_COPIAR .config/noctalia"
         [ -d ".config/noctalia-kwe" ] && RUTAS_A_COPIAR="$RUTAS_A_COPIAR .config/noctalia-kwe"
         [ -d ".config/noctalia-greeter-kwe" ] && RUTAS_A_COPIAR="$RUTAS_A_COPIAR .config/noctalia-greeter-kwe"
@@ -163,7 +192,7 @@ restaurar_iconos_defecto() {
     read -rp "$(echo -e "${AMARILLO}¿Restaurar iconos originales? [s/N]: ${NC}")" respuesta
 
     if [[ "$respuesta" =~ ^[sS]$ ]]; then
-        A_MENOS_UNO_REVERTIDO=false
+        local A_MENOS_UNO_REVERTIDO=false
         for desktop_file in "${ARCHIVOS_DESKTOP[@]}"; do
             if [ -f "$RUTA_LOCAL_APPS/$desktop_file" ]; then
                 echo -e "${ROJO} -> Eliminando custom desktop de ${VERDE}${desktop_file}${NC}"
@@ -181,6 +210,7 @@ restaurar_iconos_defecto() {
     fi
     pausar
 }
+
 submenu_cocinar_iso() {
     while true; do
         clear
@@ -284,20 +314,25 @@ while true; do
     echo -e "    Unidad detectada: $RUTA_PENDRIVE"
     echo -e "${AZUL}=======================================================${NC}"
     echo -e " 1) Ejecutar instalación completa + Rice + Iconos Custom (Reinicia)"
-    echo -e " 2) Respaldar personalización actual (Crea .tar.gz en el USB)"
-    echo -e " 3) Restaurar iconos originales del sistema (Deshacer)"
-    echo -e " 4) Opciones de Desarrollo / Cocinar ISO de GitHub -->"
-    echo -e " 5) Salir"
+    echo -e " 2) Solo reaplicar iconos personalizados (Sin tocar el Rice)"
+    echo -e " 3) Respaldar personalización actual (Crea .tar.gz en el USB)"
+    echo -e " 4) Restaurar iconos originales del sistema (Deshacer)"
+    echo -e " 5) Opciones de Desarrollo / Cocinar ISO de GitHub -->"
+    echo -e " 6) Salir"
     echo -e "${AZUL}=======================================================${NC}"
 
-    read -p "Selecciona una opción [1-5]: " opcion
+    read -p "Selecciona una opción [1-6]: " opcion
 
     case $opcion in
         1) ejecutar_instalacion_completa ;;
-        2) respaldar_rice_kinetic ;;
-        3) restaurar_iconos_defecto ;;
-        4) submenu_cocinar_iso ;;
-        5)
+        2) 
+            aplicar_iconos_custom
+            pausar
+            ;;
+        3) respaldar_rice_kinetic ;;
+        4) restaurar_iconos_defecto ;;
+        5) submenu_cocinar_iso ;;
+        6)
             echo -e "\n${VERDE}¡Hasta luego! Saliendo limpiamente...${NC}"
             exit 0
             ;;
@@ -307,3 +342,4 @@ while true; do
             ;;
     esac
 done
+
