@@ -19,11 +19,6 @@ AMARILLO='\033[1;33m'
 ROJO='\033[0;31m'
 NC='\033[0m'
 
-# [CORREGIDO PARA MATE-POLKIT]
-AGENTE_BIN="/usr/libexec/polkit-mate-authentication-agent-1"
-ARCHIVO_DESKTOP="$HOME/.config/autostart/polkit-mate-authentication-agent-1.desktop"
-DIRECTORIO_AUTOSTART="$HOME/.config/autostart"
-
 # Variables de la Suite de Iconos adaptadas a Nemo
 RUTA_LOCAL_APPS="$HOME/.local/share/applications"
 RUTA_ICONOS="$RUTA_PENDRIVE/Iconos"
