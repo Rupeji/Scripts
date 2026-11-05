@@ -261,20 +261,19 @@ submenu_cocinar_iso() {
                     echo -e "${VERDE}[✓] El motor Podman está presente y activo.${NC}"
                 fi
 
-                echo -e "${AZUL}[+] Lanzando bootc-image-builder (Proceso pesado)...${NC}"
+                # === COMPILACIÓN DIRECTA Y LIMPIA SOBRE TU NUEVA IMAGEN DE GITHUB ===
+                echo -e "${AZUL}[+] Lanzando bootc-image-builder directamente sobre la imagen remota...${NC}"
                 sudo podman run \
                   --rm -it \
                   --privileged \
                   --pull=always \
                   --net=host \
-                  --security-opt label=type:unconfined_t \
-                  -v ./builder-config.toml:/config.toml:ro \
-                  -v "$RUTA_PENDRIVE/CustomBazzite:/output" \
                   -v /var/lib/containers/storage:/var/lib/containers/storage \
+                  -v ./builder-config.toml:/config.toml:ro \
+                  -v "$RUTA_PENDRIVE/CustomBazzite":/output \
                   quay.io/centos-bootc/bootc-image-builder:latest \
-                  --type anaconda-iso \
-                  --rootfs btrfs \
-                  --use-librepo=True \
+                  --config /config.toml \
+                  --type iso \
                   ghcr.io/rupeji/bazzite-kinetic:latest
 
                 if [ $? -eq 0 ]; then
