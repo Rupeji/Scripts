@@ -16,9 +16,9 @@ echo "=== 4. Lanzando purga masiva sin restricciones (KDE + Bazzite Bloat + Impr
 sudo dnf5 remove \
   plasma-workspace "plasma-*" "kde-*" sddm sddm-kcm dolphin konsole okular ark spectacle kcalc okular \
   gwenview elisa kontainer kalarm kolourpaint krecorder kmail neochat krfb krdc kfind kwrite kcmshell \
-  plasma-systemsettings plasma-breeze breeze-gtk glibc-all-langpacks \
+  plasma-systemsettings plasma-breeze breeze-gtk \
   lutris waydroid waydroid-selinux waydroid-nvidia waydroid-nvidia-selinux input-remapper cardwire \
-  terra-mangohud bazzite-portal bazzite-updater msedit \
+  terra-mangohud msedit \
   "fcitx5*" "ibus*" mariadb mariadb-server mariadb-common mariadb-connector-c \
   intel-gmmlib intel-igc intel-igc-libs intel-mediasdk intel-opencl intel-opencl-clang intel-vaapi-driver intel-vpl-gpu-rt libva-intel-media-driver \
   intel-lpmd thermald intel-gpu-firmware intel-npu-firmware intel-vsc-firmware \
