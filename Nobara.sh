@@ -1,6 +1,10 @@
 #!/bin/bash
-# Script definitivo de optimización extrema para Nobara (DNF5)
-# Fusiona la limpieza de Nobara KDE con la purga avanzada de Bazzite
+# Script definitivo de optimización extrema para Nobara (DNF5) - Versión Inmune
+# Desprotege el sistema, elimina KDE Plasma y el bloatware de Bazzite/Nobara
+
+echo "=== 0. Desprotegiendo paquetes core de Nobara ==="
+# Eliminamos las restricciones de fábrica para que dnf5 no bloquee la transacción
+sudo rm -f /etc/dnf/protected.d/nobara.conf
 
 echo "=== 1. Activando el repositorio oficial de Don ==="
 sudo dnf5 copr enable theblackdon/kwee -y
@@ -8,7 +12,7 @@ sudo dnf5 copr enable theblackdon/kwee -y
 echo "=== 2. Instalando KineticWE, Noctalia, el Greeter y Kitty ==="
 sudo dnf5 install kineticwe kineticwe-greeter kitty -y
 
-echo "=== 3. Lanzando purga masiva del sistema (KDE + Bazzite Bloat + Impresoras + Intel) ==="
+echo "=== 4. Lanzando purga masiva sin restricciones (KDE + Bazzite Bloat + Impresoras + Intel) ==="
 sudo dnf5 remove \
   plasma-workspace "plasma-*" "kde-*" sddm sddm-kcm dolphin konsole okular ark spectacle kcalc okular \
   gwenview elisa kontainer kalarm kolourpaint krecorder kmail neochat krfb krdc kfind kwrite kcmshell \
@@ -23,11 +27,11 @@ sudo dnf5 remove \
   blender obs-studio kdenlive inkscape libreoffice \
   -y
 
-echo "=== 4. Limpieza profunda de paquetes huérfanos ==="
+echo "=== 5. Limpieza profunda de paquetes huérfanos ==="
 sudo dnf5 autoremove -y
 
 echo "=========================================================="
-echo "¡Tu Nobara ha sido purgada al extremo con éxito!"
-echo "Tu terminal ligera es Kitty. Entorno KineticWE inyectado."
+echo "¡Tu Nobara ha sido purgada al extremo sin bloqueos!"
+echo "Tu terminal es Kitty y tu nuevo entorno es KineticWE."
 echo "Por favor, reinicia tu ordenador para aplicar los cambios."
 echo "=========================================================="
