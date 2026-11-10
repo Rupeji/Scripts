@@ -8,9 +8,7 @@ echo "=== 1. Activando el repositorio oficial de Don ==="
 sudo dnf5 copr enable theblackdon/kwee -y
 
 echo "=== 2. Instalando KineticWE, Noctalia, el Greeter y Kitty ==="
-sudo dnf5 install kineticwe kineticwe-greeter firefox fastfetch kitty -y
-
-sudo dnf5 install fish loupe gnome-text-editor mediawriter nemo nemo-fileroller cinnamon-translations -y
+sudo dnf5 install kineticwe kineticwe-greeter firefox fastfetch kitty fish loupe gnome-text-editor mediawriter nemo nemo-fileroller -y
 
 sudo dnf remove alacritty -y
 
@@ -34,8 +32,10 @@ reboot
 
 sudo dnf install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
 
-sudo dnf discord protonplus steam mangohud gamescope 
+sudo dnf protonplus steam mangohud gamescope 
 
+curl -fL 'https://discord.com/api/download/stable?platform=linux&format=rpm' -o discord.rpm
+sudo dnf install ./discord.rpm
 
 # Cachy kernel
 
