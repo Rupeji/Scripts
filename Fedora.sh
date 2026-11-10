@@ -13,7 +13,7 @@ sudo dnf5 install kineticwe kineticwe-greeter firefox fastfetch kitty -y
 sudo dnf remove alacritty -y
 
 ## Fedora 45 Nvidia ##
-sudo dnf install kernel-devel kernel-headers gcc make dkms acpid libglvnd-glx libglvnd-opengl libglvnd-devel pkgconfig libxcb egl-wayland
+sudo dnf install kernel-devel kernel-headers gcc make dkms acpid libglvnd-glx libglvnd-opengl libglvnd-devel pkgconfig libxcb egl-wayland -y
 
 # drivers url
 
@@ -39,7 +39,7 @@ sudo dnf copr enable bieszczaders/kernel-cachyos -y
 
 sudo dnf install kernel-cachyos kernel-cachyos-devel-matched -y
 
-
+sudo grub2-mkconfig -o /boot/efi/EFI/fedora/grub.cfg
 
 
 #Mantenimiento
