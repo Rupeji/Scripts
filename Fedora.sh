@@ -32,10 +32,8 @@ reboot
 
 sudo dnf install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
 
-sudo dnf protonplus steam mangohud gamescope 
+sudo dnf install discord protonplus steam mangohud gamescope 
 
-curl -fL 'https://discord.com/api/download/stable?platform=linux&format=rpm' -o discord.rpm
-sudo dnf install ./discord.rpm
 
 # Cachy kernel
 
