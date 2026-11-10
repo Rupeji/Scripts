@@ -44,7 +44,6 @@ dnf upgrade --refresh -y
 echo -e "\n${VERDE}[2/8] Configurando repositorios adicionales...${NC}"
 sudo dnf copr enable theblackdon/kwee -y
 sudo dnf copr enable bieszczaders/kernel-cachyos -y
-sudo dnf install --nogpgcheck --repofrompath 'terra,https://fyralabs.com' terra-release -y
 sudo dnf install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release terra-gpg-keys -y
 if [ "$INSTALAR_NVIDIA" = true ] || [ "$INSTALAR_CUDA" = true ]; then
     echo -e "${AZUL}Habilitando RPM Fusion para soporte de NVIDIA...${NC}"
