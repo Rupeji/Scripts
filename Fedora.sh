@@ -70,10 +70,11 @@ if git clone --depth 1 "$URL_KINETIC_LIMPIA" "$DIR_TMP_KINETIC"; then
     DIR_SOURCE_BUILD="$DIR_TMP_KINETIC/build_files"
     DIR_RECURSOS="$DIR_SOURCE_BUILD/recursos"
     DIR_DOTFILES_ORIGEN="$DIR_SOURCE_BUILD/dotfiles"
+    USER_HOME="/home/inhumano"
 
     # --- INYECTAR STARSHIP Y PAQUETES LOCALES ---
     if [ -f "$DIR_RECURSOS/starship" ]; then
-        echo " -> Inyectando Starship Prompt local..."
+        echo " -> Inyectando Starship Prompt..."
         cp "$DIR_RECURSOS/starship" /usr/bin/starship
         chmod 755 /usr/bin/starship
     fi
@@ -83,35 +84,36 @@ if git clone --depth 1 "$URL_KINETIC_LIMPIA" "$DIR_TMP_KINETIC"; then
         dnf5 -y install "$DIR_RECURSOS/gslapper.rpm"
     fi
 
-    # --- INYECTAR SKELETON DOTFILES EN /etc/skel ---
+    # --- INYECTAR DIRECTAMENTE EN TU HOME ---
     if [ -d "$DIR_DOTFILES_ORIGEN" ]; then
-        echo " -> Desplegando quirúrgicamente dotfiles organizados en el esqueleto global (/etc/skel)..."
-        mkdir -p /etc/skel/.config/{kitty,fish,kineticwe,niri,noctalia-kwe,gtk-3.0,gtk-4.0,qt5ct,qt6ct}
+        echo " -> Desplegando quirúrgicamente dotfiles en tu HOME ($USER_HOME)..."
+        mkdir -p "$USER_HOME/.config"/{kitty,fish,kineticwe,niri,noctalia-kwe,gtk-3.0,gtk-4.0,qt5ct,qt6ct}
 
-        [ -f "$DIR_DOTFILES_ORIGEN/kitty/kitty.conf" ] && cp "$DIR_DOTFILES_ORIGEN/kitty/kitty.conf" /etc/skel/.config/kitty/kitty.conf
-        [ -f "$DIR_DOTFILES_ORIGEN/fish/config.fish" ] && cp "$DIR_DOTFILES_ORIGEN/fish/config.fish" /etc/skel/.config/fish/config.fish
-        [ -f "$DIR_DOTFILES_ORIGEN/starship/starship.toml" ] && cp "$DIR_DOTFILES_ORIGEN/starship/starship.toml" /etc/skel/.config/starship.toml
+        [ -f "$DIR_DOTFILES_ORIGEN/kitty/kitty.conf" ] && cp "$DIR_DOTFILES_ORIGEN/kitty/kitty.conf" "$USER_HOME/.config/kitty/kitty.conf"
+        [ -f "$DIR_DOTFILES_ORIGEN/fish/config.fish" ] && cp "$DIR_DOTFILES_ORIGEN/fish/config.fish" "$USER_HOME/.config/fish/config.fish"
+        [ -f "$DIR_DOTFILES_ORIGEN/starship/starship.toml" ] && cp "$DIR_DOTFILES_ORIGEN/starship/starship.toml" "$USER_HOME/.config/starship.toml"
 
-        [ -d "$DIR_DOTFILES_ORIGEN/kineticwe" ] && cp -r "$DIR_DOTFILES_ORIGEN/kineticwe"/* /etc/skel/.config/kineticwe/ 2>/dev/null || true
-        [ -d "$DIR_DOTFILES_ORIGEN/niri" ] && cp -r "$DIR_DOTFILES_ORIGEN/niri"/* /etc/skel/.config/niri/ 2>/dev/null || true
-        [ -d "$DIR_DOTFILES_ORIGEN/noctalia-kwe" ] && cp -r "$DIR_DOTFILES_ORIGEN/noctalia-kwe"/* /etc/skel/.config/noctalia-kwe/ 2>/dev/null || true
-        [ -d "$DIR_DOTFILES_ORIGEN/gtk-3.0" ] && cp -r "$DIR_DOTFILES_ORIGEN/gtk-3.0"/* /etc/skel/.config/gtk-3.0/ 2>/dev/null || true
-        [ -d "$DIR_DOTFILES_ORIGEN/gtk-4.0" ] && cp -r "$DIR_DOTFILES_ORIGEN/gtk-4.0"/* /etc/skel/.config/gtk-4.0/ 2>/dev/null || true
-        [ -d "$DIR_DOTFILES_ORIGEN/qt5ct" ] && cp -r "$DIR_DOTFILES_ORIGEN/qt5ct"/* /etc/skel/.config/qt5ct/ 2>/dev/null || true
-        [ -d "$DIR_DOTFILES_ORIGEN/qt6ct" ] && cp -r "$DIR_DOTFILES_ORIGEN/qt6ct"/* /etc/skel/.config/qt6ct/ 2>/dev/null || true
+        [ -d "$DIR_DOTFILES_ORIGEN/kineticwe" ] && cp -r "$DIR_DOTFILES_ORIGEN/kineticwe"/* "$USER_HOME/.config/kineticwe/" 2>/dev/null || true
+        [ -d "$DIR_DOTFILES_ORIGEN/niri" ] && cp -r "$DIR_DOTFILES_ORIGEN/niri"/* "$USER_HOME/.config/niri/" 2>/dev/null || true
+        [ -d "$DIR_DOTFILES_ORIGEN/noctalia-kwe" ] && cp -r "$DIR_DOTFILES_ORIGEN/noctalia-kwe"/* "$USER_HOME/.config/noctalia-kwe/" 2>/dev/null || true
+        [ -d "$DIR_DOTFILES_ORIGEN/gtk-3.0" ] && cp -r "$DIR_DOTFILES_ORIGEN/gtk-3.0"/* "$USER_HOME/.config/gtk-3.0/" 2>/dev/null || true
+        [ -d "$DIR_DOTFILES_ORIGEN/gtk-4.0" ] && cp -r "$DIR_DOTFILES_ORIGEN/gtk-4.0"/* "$USER_HOME/.config/gtk-4.0/" 2>/dev/null || true
+        [ -d "$DIR_DOTFILES_ORIGEN/qt5ct" ] && cp -r "$DIR_DOTFILES_ORIGEN/qt5ct"/* "$USER_HOME/.config/qt5ct/" 2>/dev/null || true
+        [ -d "$DIR_DOTFILES_ORIGEN/qt6ct" ] && cp -r "$DIR_DOTFILES_ORIGEN/qt6ct"/* "$USER_HOME/.config/qt6ct/" 2>/dev/null || true
         
-        chmod -R 755 /etc/skel/.config
+        # Corregir permisos para tu usuario en .config
+        chown -R inhumano:inhumano "$USER_HOME/.config"
     fi
 
-    # --- INYECTAR COLOR-SCHEMES ---
+    # --- INYECTAR COLOR-SCHEMES EN TU HOME ---
     if [ -d "$DIR_DOTFILES_ORIGEN/color-schemes" ]; then
-        echo " -> Desplegando esquemas de color..."
-        mkdir -p /etc/skel/.local/share/color-schemes
-        cp -r "$DIR_DOTFILES_ORIGEN/color-schemes"/* /etc/skel/.local/share/color-schemes/ 2>/dev/null || true
-        chmod -R 755 /etc/skel/.local
+        echo " -> Desplegando esquemas de color en tu HOME..."
+        mkdir -p "$USER_HOME/.local/share/color-schemes"
+        cp -r "$DIR_DOTFILES_ORIGEN/color-schemes"/* "$USER_HOME/.local/share/color-schemes/" 2>/dev/null || true
+        chown -R inhumano:inhumano "$USER_HOME/.local"
     fi
 
-    # --- INYECTAR TIPOGRAFÍAS ---
+    # --- INYECTAR TIPOGRAFÍAS (Se quedan en /usr por ser globales) ---
     echo " -> Inyectando tipografías JetBrainsMono Nerd Font..."
     mkdir -p /usr/share/fonts/jetbrains-mono-nerd
     [ -f "$DIR_RECURSOS/JetBrainsMonoNerdFont-Regular.ttf" ] && cp "$DIR_RECURSOS/JetBrainsMonoNerdFont-Regular.ttf" /usr/share/fonts/jetbrains-mono-nerd/
@@ -119,9 +121,9 @@ if git clone --depth 1 "$URL_KINETIC_LIMPIA" "$DIR_TMP_KINETIC"; then
     chmod 644 /usr/share/fonts/jetbrains-mono-nerd/*.ttf 2>/dev/null || true
     fc-cache -f -v >/dev/null
 
-    # --- INSTALACIÓN DE ICONOS TELA ---
+    # --- INSTALACIÓN DE ICONOS TELA (Globales) ---
     if [ -f "$DIR_RECURSOS/Tela-icon-theme.tar.gz" ]; then
-        echo " -> Desempaquetando e instalando Iconos Tela a nivel de sistema..."
+        echo " -> Desempaquetando e instalando Iconos Tela..."
         mkdir -p /usr/share/icons
         rm -rf /tmp/Tela-icon-theme
         tar -xzf "$DIR_RECURSOS/Tela-icon-theme.tar.gz" -C /tmp/
@@ -132,7 +134,7 @@ if git clone --depth 1 "$URL_KINETIC_LIMPIA" "$DIR_TMP_KINETIC"; then
         rm -rf /tmp/Tela-icon-theme
     fi
 
-    # --- INSTALACIÓN DE CURSORES BIBATA ---
+    # --- INSTALACIÓN DE CURSORES BIBATA (Globales) ---
     mkdir -p /usr/share/icons/
     if [ -f "$DIR_RECURSOS/Bibata-Modern-Classic.tar.xz" ]; then
         echo " -> Descomprimiendo Bibata Modern Classic..."
@@ -174,7 +176,7 @@ fi
 echo -e "\n${VERDE}[7/8] Instalando aplicaciones de juegos y comunicación...${NC}"
 dnf install -y discord protonplus steam mangohud gamescope
 
-# Paso 8: Clonar e inyectar activos globales en Pictures (Iconos y Wallpapers) desde tu repositorio externo
+# Paso 8: Clonar e inyectar activos globales en Pictures (Iconos y Wallpapers)
 echo -e "\n${VERDE}[8/8] Descargando activos estéticos externos (IconsWalls)...${NC}"
 DIR_TMP_WALLS="/tmp/git_iconswalls_backup"
 rm -rf "$DIR_TMP_WALLS"
@@ -183,21 +185,31 @@ URL_ASSETS_ESPACIOS="https://github .com /Rupeji /IconsWalls"
 URL_ASSETS_LIMPIA=$(echo "$URL_ASSETS_ESPACIOS" | tr -d ' ')
 
 if git clone --depth 1 "$URL_ASSETS_LIMPIA" "$DIR_TMP_WALLS"; then
-    mkdir -p /etc/skel/Pictures
-    mkdir -p /etc/skel/.config/noctalia/activos
+    mkdir -p /home/inhumano/Pictures
+    mkdir -p /home/inhumano/.config/noctalia/activos
 
     if [ -d "$DIR_TMP_WALLS/Wallpapers" ]; then
-        echo " -> Copiando Wallpapers al esqueleto..."
-        cp -r "$DIR_TMP_WALLS/Wallpapers" /etc/skel/Pictures/
+        echo " -> Copiando carpeta Wallpapers a tu directorio Pictures..."
+        cp -r "$DIR_TMP_WALLS/Wallpapers" /home/inhumano/Pictures/
     fi
 
     if [ -d "$DIR_TMP_WALLS/Iconos" ]; then
-        echo " -> Copiando Iconos al esqueleto..."
-        cp -r "$DIR_TMP_WALLS/Iconos" /etc/skel/Pictures/
-        cp "$DIR_TMP_WALLS/Iconos/Bazzite_Logo.png" /etc/skel/.config/noctalia/activos/ 2>/dev/null || true
+        echo " -> Copiando carpeta Iconos a tu directorio Pictures..."
+        cp -r "$DIR_TMP_WALLS/Iconos" /home/inhumano/Pictures/
+        
+        echo " -> Inyectando logotipo personalizado del dock..."
+        cp "$DIR_TMP_WALLS/Iconos/Bazzite_Logo.png" /home/inhumano/.config/noctalia/activos/ 2>/dev/null || true
     fi
-    chmod -R 755 /etc/skel/Pictures
+    
+    # Otorgar la propiedad total de las carpetas modificadas a tu usuario humano
+    chown -R inhumano:inhumano /home/inhumano/Pictures
+    chown -R inhumano:inhumano /home/inhumano/.config/noctalia
+    echo "¡Carpetas de assets aplicadas a tu /home de forma correcta!"
+else
+    echo "Error crítico: No se pudo clonar el repositorio de assets."
+    exit 1
 fi
+
 rm -rf "$DIR_TMP_WALLS"
 
 # --- CIERRE ---
@@ -211,6 +223,8 @@ if [ "$INSTALAR_NVIDIA" = true ]; then
     echo "Por favor, ESPERA de 3 a 5 minutos completos antes de reiniciar."
     echo -e "Una vez transcurrido el tiempo, escribe: ${VERDE}sudo reboot${NC}"
 else
+    echo -e "${VERDE}¡Loadout finalizado con éxito! Ya puedes usar tu sistema o reiniciar si lo deseas.${NC}"
+fi
 
 
 #Mantenimiento
