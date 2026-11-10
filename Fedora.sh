@@ -1,49 +1,220 @@
 #!/bin/bash
 
+# Colores para la interfaz en la terminal
+VERDE='\033[0;32m'
+AZUL='\033[0;34m'
+AMARILLO='\033[1;33m'
+NC='\033[0m' # Sin color
 
-# Actualizar el sistema
-sudo dnf upgrade --refresh
+# Validar privilegios de administrador (SUDO) antes de empezar
+if [ "$EUID" -ne 0 ]; then
+  echo -e "${AMARILLO}Por favor, ejecuta este script usando 'sudo':${NC}"
+  echo "sudo $0"
+  exit 1
+fi
 
-sudo dnf5 copr enable theblackdon/kwee -y
+clear
+echo -e "${AZUL}=====================================================${NC}"
+echo -e "    LOADOUT PERSONALIZADO: FEDORA + NVIDIA + DOTFILES "
+echo -e "${AZUL}=====================================================${NC}"
 
+# Variables de selección estilo LGL
+INSTALAR_NVIDIA=false
+INSTALAR_CUDA=false
 
-sudo dnf5 install kineticwe kineticwe-greeter firefox fastfetch kitty fish loupe gnome-text-editor mediawriter nemo nemo-fileroller -y
+# --- MENÚ DE SELECCIÓN DE HARDWARE ---
+echo -e "\n${AMARILLO}¿Deseas añadir la pila gráfica de NVIDIA a tu instalación? (s/n):${NC}"
+read -p "-> Instalar controlador akmod-nvidia (RPM Fusion): " resp
+if [[ "$resp" =~ ^[Ss]$ ]]; then INSTALAR_NVIDIA=true; fi
 
-sudo dnf remove alacritty -y
-
-## Fedora 45 Nvidia ##
-sudo dnf install kernel-devel kernel-headers gcc make dkms acpid libglvnd-glx libglvnd-opengl libglvnd-devel pkgconfig libxcb egl-wayland -y
-
-# drivers url
-
-https://es.download.nvidia.com/XFree86/Linux-x86_64/615.78.08/NVIDIA-Linux-x86_64-615.78.08.run
-
-su
-
-chmod +x NVIDIA-Linux-x86_64-615.78.08.run
-
-./NVIDIA-Linux-x86_64-615.78.08.run
-
-sudo dracut --force --regenerate-all
-
-reboot
-
-
-sudo dnf install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
-
-sudo dnf install discord protonplus steam mangohud gamescope 
+read -p "-> Instalar aceleración CUDA / NVENC (OBS, Blender, etc): " resp
+if [[ "$resp" =~ ^[Ss]$ ]]; then INSTALAR_CUDA=true; fi
 
 
-# Cachy kernel
+# --- PROCESAMIENTO E INSTALACIÓN ---
+echo -e "\n${AZUL}=====================================================${NC}"
+echo -e "              INICIANDO INSTALACIÓN                  "
+echo -e "${AZUL}=====================================================${NC}"
 
+# Paso 1: Actualización profunda (Fuerza la base antes de compilar nada)
+echo -e "\n${VERDE}[1/8] Actualizando los repositorios y el sistema...${NC}"
+dnf upgrade --refresh -y
+
+# Paso 2: Configuración de Repositorios
+echo -e "\n${VERDE}[2/8] Configurando repositorios adicionales...${NC}"
+sudo dnf copr enable theblackdon/kwee -y
 sudo dnf copr enable bieszczaders/kernel-cachyos -y
+sudo dnf install --nogpgcheck --repofrompath 'terra,https://fyralabs.com' terra-release -y
+sudo dnf install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release terra-gpg-keys -y
+if [ "$INSTALAR_NVIDIA" = true ] || [ "$INSTALAR_CUDA" = true ]; then
+    echo -e "${AZUL}Habilitando RPM Fusion para soporte de NVIDIA...${NC}"
+    dnf install -y https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm \
+                   https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
+    # Habilitar AppStream metadata (Para que Discover/GNOME Software los reconozcan visualmente como hace LGL)
+    #dnf install -y rpmfusion-\*-appstream-data
+fi
 
-sudo dnf install kernel-cachyos kernel-cachyos-devel-matched -y
+# Paso 3: Instalación de tus aplicaciones del sistema
+echo -e "\n${VERDE}[3/8] Instalando herramientas del sistema y utilidades...${NC}"
+dnf5 install kineticwe kineticwe-greeter firefox fastfetch kitty fish loupe gnome-text-editor mediawriter nemo nemo-fileroller git tar -y
+dnf remove alacritty -y
 
-sudo grub2-mkconfig -o /boot/efi/EFI/fedora/grub.cfg
+# Paso 4: Clonar temporalmente tu repositorio bazzite-kinetic para extraer dotfiles/recursos
+echo -e "\n${VERDE}[4/8] Descargando dotfiles y recursos desde bazzite-kinetic en GitHub...${NC}"
+DIR_TMP_KINETIC="/tmp/git_bazzite_kinetic_setup"
+rm -rf "$DIR_TMP_KINETIC"
+
+URL_KINETIC_ESPACIOS="https://github .com /Rupeji /bazzite-kinetic"
+URL_KINETIC_LIMPIA=$(echo "$URL_KINETIC_ESPACIOS" | tr -d ' ')
+
+if git clone --depth 1 "$URL_KINETIC_LIMPIA" "$DIR_TMP_KINETIC"; then
+    DIR_SOURCE_BUILD="$DIR_TMP_KINETIC/build_files"
+    DIR_RECURSOS="$DIR_SOURCE_BUILD/recursos"
+    DIR_DOTFILES_ORIGEN="$DIR_SOURCE_BUILD/dotfiles"
+
+    # --- INYECTAR STARSHIP Y PAQUETES LOCALES ---
+    if [ -f "$DIR_RECURSOS/starship" ]; then
+        echo " -> Inyectando Starship Prompt local..."
+        cp "$DIR_RECURSOS/starship" /usr/bin/starship
+        chmod 755 /usr/bin/starship
+    fi
+
+    if [ -f "$DIR_RECURSOS/gslapper.rpm" ]; then
+        echo " -> Instalando paquete local gslapper.rpm mediante dnf5..."
+        dnf5 -y install "$DIR_RECURSOS/gslapper.rpm"
+    fi
+
+    # --- INYECTAR SKELETON DOTFILES EN /etc/skel ---
+    if [ -d "$DIR_DOTFILES_ORIGEN" ]; then
+        echo " -> Desplegando quirúrgicamente dotfiles organizados en el esqueleto global (/etc/skel)..."
+        mkdir -p /etc/skel/.config/{kitty,fish,kineticwe,niri,noctalia-kwe,gtk-3.0,gtk-4.0,qt5ct,qt6ct}
+
+        [ -f "$DIR_DOTFILES_ORIGEN/kitty/kitty.conf" ] && cp "$DIR_DOTFILES_ORIGEN/kitty/kitty.conf" /etc/skel/.config/kitty/kitty.conf
+        [ -f "$DIR_DOTFILES_ORIGEN/fish/config.fish" ] && cp "$DIR_DOTFILES_ORIGEN/fish/config.fish" /etc/skel/.config/fish/config.fish
+        [ -f "$DIR_DOTFILES_ORIGEN/starship/starship.toml" ] && cp "$DIR_DOTFILES_ORIGEN/starship/starship.toml" /etc/skel/.config/starship.toml
+
+        [ -d "$DIR_DOTFILES_ORIGEN/kineticwe" ] && cp -r "$DIR_DOTFILES_ORIGEN/kineticwe"/* /etc/skel/.config/kineticwe/ 2>/dev/null || true
+        [ -d "$DIR_DOTFILES_ORIGEN/niri" ] && cp -r "$DIR_DOTFILES_ORIGEN/niri"/* /etc/skel/.config/niri/ 2>/dev/null || true
+        [ -d "$DIR_DOTFILES_ORIGEN/noctalia-kwe" ] && cp -r "$DIR_DOTFILES_ORIGEN/noctalia-kwe"/* /etc/skel/.config/noctalia-kwe/ 2>/dev/null || true
+        [ -d "$DIR_DOTFILES_ORIGEN/gtk-3.0" ] && cp -r "$DIR_DOTFILES_ORIGEN/gtk-3.0"/* /etc/skel/.config/gtk-3.0/ 2>/dev/null || true
+        [ -d "$DIR_DOTFILES_ORIGEN/gtk-4.0" ] && cp -r "$DIR_DOTFILES_ORIGEN/gtk-4.0"/* /etc/skel/.config/gtk-4.0/ 2>/dev/null || true
+        [ -d "$DIR_DOTFILES_ORIGEN/qt5ct" ] && cp -r "$DIR_DOTFILES_ORIGEN/qt5ct"/* /etc/skel/.config/qt5ct/ 2>/dev/null || true
+        [ -d "$DIR_DOTFILES_ORIGEN/qt6ct" ] && cp -r "$DIR_DOTFILES_ORIGEN/qt6ct"/* /etc/skel/.config/qt6ct/ 2>/dev/null || true
+        
+        chmod -R 755 /etc/skel/.config
+    fi
+
+    # --- INYECTAR COLOR-SCHEMES ---
+    if [ -d "$DIR_DOTFILES_ORIGEN/color-schemes" ]; then
+        echo " -> Desplegando esquemas de color..."
+        mkdir -p /etc/skel/.local/share/color-schemes
+        cp -r "$DIR_DOTFILES_ORIGEN/color-schemes"/* /etc/skel/.local/share/color-schemes/ 2>/dev/null || true
+        chmod -R 755 /etc/skel/.local
+    fi
+
+    # --- INYECTAR TIPOGRAFÍAS ---
+    echo " -> Inyectando tipografías JetBrainsMono Nerd Font..."
+    mkdir -p /usr/share/fonts/jetbrains-mono-nerd
+    [ -f "$DIR_RECURSOS/JetBrainsMonoNerdFont-Regular.ttf" ] && cp "$DIR_RECURSOS/JetBrainsMonoNerdFont-Regular.ttf" /usr/share/fonts/jetbrains-mono-nerd/
+    [ -f "$DIR_RECURSOS/JetBrainsMonoNerdFont-Bold.ttf" ] && cp "$DIR_RECURSOS/JetBrainsMonoNerdFont-Bold.ttf" /usr/share/fonts/jetbrains-mono-nerd/
+    chmod 644 /usr/share/fonts/jetbrains-mono-nerd/*.ttf 2>/dev/null || true
+    fc-cache -f -v >/dev/null
+
+    # --- INSTALACIÓN DE ICONOS TELA ---
+    if [ -f "$DIR_RECURSOS/Tela-icon-theme.tar.gz" ]; then
+        echo " -> Desempaquetando e instalando Iconos Tela a nivel de sistema..."
+        mkdir -p /usr/share/icons
+        rm -rf /tmp/Tela-icon-theme
+        tar -xzf "$DIR_RECURSOS/Tela-icon-theme.tar.gz" -C /tmp/
+        if [ -f /tmp/Tela-icon-theme/install.sh ]; then
+            chmod +x /tmp/Tela-icon-theme/install.sh
+            /tmp/Tela-icon-theme/install.sh -d "/usr/share/icons" >/dev/null
+        fi
+        rm -rf /tmp/Tela-icon-theme
+    fi
+
+    # --- INSTALACIÓN DE CURSORES BIBATA ---
+    mkdir -p /usr/share/icons/
+    if [ -f "$DIR_RECURSOS/Bibata-Modern-Classic.tar.xz" ]; then
+        echo " -> Descomprimiendo Bibata Modern Classic..."
+        tar -xf "$DIR_RECURSOS/Bibata-Modern-Classic.tar.xz" -C /usr/share/icons/
+    fi
+    if [ -f "$DIR_RECURSOS/Bibata-Modern-Ice.tar.xz" ]; then
+        echo " -> Descomprimiendo Bibata Modern Ice..."
+        tar -xf "$DIR_RECURSOS/Bibata-Modern-Ice.tar.xz" -C /usr/share/icons/
+    fi
+    chmod -R 755 /usr/share/icons/Bibata-Modern-* 2>/dev/null || true
+
+else
+    echo "Error crítico: No se pudo clonar bazzite-kinetic desde GitHub."
+    exit 1
+fi
+rm -rf "$DIR_TMP_KINETIC"
+
+# Paso 5: Instalación del Kernel de CachyOS (Versión LGL Optimizada)
+echo -e "\n${VERDE}[5/8] Instalando Kernel de CachyOS optimizado...${NC}"
+dnf install -y kernel-cachyos
+if [ "$INSTALAR_NVIDIA" = true ]; then
+    dnf install -y kernel-cachyos-devel-matched
+else
+    dnf install -y kernel-cachyos-devel
+fi
+
+# Paso 6: Instalación de Drivers Gráficos NVIDIA (Si se seleccionó)
+if [ "$INSTALAR_NVIDIA" = true ]; then
+    echo -e "\n${VERDE}[6/8] Instalando controlador gráfico akmod-nvidia...${NC}"
+    [ "$INSTALAR_CACHYOS" = false ] && dnf install -y kernel-devel
+    dnf install -y akmod-nvidia
+fi
+if [ "$INSTALAR_CUDA" = true ]; then
+    echo -e "${VERDE}Añadiendo librerías CUDA...${NC}"
+    dnf install -y xorg-x11-drv-nvidia-cuda
+fi
+
+# Paso 7: Instalación de aplicaciones de Gaming y Terra
+echo -e "\n${VERDE}[7/8] Instalando aplicaciones de juegos y comunicación...${NC}"
+dnf install -y discord protonplus steam mangohud gamescope
+
+# Paso 8: Clonar e inyectar activos globales en Pictures (Iconos y Wallpapers) desde tu repositorio externo
+echo -e "\n${VERDE}[8/8] Descargando activos estéticos externos (IconsWalls)...${NC}"
+DIR_TMP_WALLS="/tmp/git_iconswalls_backup"
+rm -rf "$DIR_TMP_WALLS"
+
+URL_ASSETS_ESPACIOS="https://github .com /Rupeji /IconsWalls"
+URL_ASSETS_LIMPIA=$(echo "$URL_ASSETS_ESPACIOS" | tr -d ' ')
+
+if git clone --depth 1 "$URL_ASSETS_LIMPIA" "$DIR_TMP_WALLS"; then
+    mkdir -p /etc/skel/Pictures
+    mkdir -p /etc/skel/.config/noctalia/activos
+
+    if [ -d "$DIR_TMP_WALLS/Wallpapers" ]; then
+        echo " -> Copiando Wallpapers al esqueleto..."
+        cp -r "$DIR_TMP_WALLS/Wallpapers" /etc/skel/Pictures/
+    fi
+
+    if [ -d "$DIR_TMP_WALLS/Iconos" ]; then
+        echo " -> Copiando Iconos al esqueleto..."
+        cp -r "$DIR_TMP_WALLS/Iconos" /etc/skel/Pictures/
+        cp "$DIR_TMP_WALLS/Iconos/Bazzite_Logo.png" /etc/skel/.config/noctalia/activos/ 2>/dev/null || true
+    fi
+    chmod -R 755 /etc/skel/Pictures
+fi
+rm -rf "$DIR_TMP_WALLS"
+
+# --- CIERRE ---
+echo -e "\n${AZUL}=====================================================${NC}"
+echo -e "            PROCESO DE CARGA TERMINADO               "
+echo -e "${AZUL}=====================================================${NC}"
+
+if [ "$INSTALAR_NVIDIA" = true ]; then
+    echo -e "${AMARILLO}AVISO DE COMPILACIÓN NVIDIA:${NC}"
+    echo "El sistema está generando el controlador en segundo plano."
+    echo "Por favor, ESPERA de 3 a 5 minutos completos antes de reiniciar."
+    echo -e "Una vez transcurrido el tiempo, escribe: ${VERDE}sudo reboot${NC}"
+else
 
 
 #Mantenimiento
-sudo dnf ditro-sync
-sudo dnf update --refresh
-sudo dnf5 autoremove -y
+#sudo dnf ditro-sync
+#sudo dnf update --refresh
+#sudo dnf5 autoremove -y
