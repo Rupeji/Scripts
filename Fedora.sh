@@ -1,13 +1,12 @@
 #!/bin/bash
 
-echo "=== 0. Actualizar el sistema ==="
+
 # Actualizar el sistema
 sudo dnf upgrade --refresh
 
-echo "=== 1. Activando el repositorio oficial de Don ==="
 sudo dnf5 copr enable theblackdon/kwee -y
 
-echo "=== 2. Instalando KineticWE, Noctalia, el Greeter y Kitty ==="
+
 sudo dnf5 install kineticwe kineticwe-greeter firefox fastfetch kitty fish loupe gnome-text-editor mediawriter nemo nemo-fileroller -y
 
 sudo dnf remove alacritty -y
