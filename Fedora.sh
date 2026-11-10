@@ -10,6 +10,8 @@ sudo dnf5 copr enable theblackdon/kwee -y
 echo "=== 2. Instalando KineticWE, Noctalia, el Greeter y Kitty ==="
 sudo dnf5 install kineticwe kineticwe-greeter firefox fastfetch kitty -y
 
+sudo dnf5 install fish loupe gnome-text-editor mediawriter nemo nemo-fileroller cinnamon-translations -y
+
 sudo dnf remove alacritty -y
 
 ## Fedora 45 Nvidia ##
@@ -20,6 +22,8 @@ sudo dnf install kernel-devel kernel-headers gcc make dkms acpid libglvnd-glx li
 https://es.download.nvidia.com/XFree86/Linux-x86_64/615.78.08/NVIDIA-Linux-x86_64-615.78.08.run
 
 su
+
+chmod +x NVIDIA-Linux-x86_64-615.78.08.run
 
 ./NVIDIA-Linux-x86_64-615.78.08.run
 
