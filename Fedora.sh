@@ -226,17 +226,21 @@ else
 fi
 rm -rf "$DIR_TMP_WALLS"
 
-# Paso 8: Instalación y compilación visible de Drivers Gráficos NVIDIA
+# Paso 8: Instalación de Drivers NVIDIA (opcional) y reconstrucción de initramfs
+echo -e "\n${VERDE}[8/8] Finalizando configuración del kernel y drivers gráficos...${NC}"
+
 if [ "$INSTALAR_NVIDIA" = true ]; then
-    echo -e "\n${VERDE}[8/8] Instalando y compilando controlador gráfico NVIDIA...${NC}"
+    echo " -> Instalando controlador gráfico NVIDIA..."
     dnf install -y akmod-nvidia
     
-    echo -e "${AMARILLO}Compilando módulo del kernel en primer plano (esto tardará unos minutos)...${NC}"
+    echo -e "${AMARILLO}Compilando módulo gráfico de NVIDIA (esto tardará unos minutos)...${NC}"
     akmods --force
-    dracut --force --regenerate-all
 else
-    echo -e "\n${VERDE}[8/8] Omitiendo drivers de NVIDIA según tu selección.${NC}"
+    echo " -> Omitiendo drivers propietarios de NVIDIA (usando drivers open-source Mesa/kernel)."
 fi
+
+echo -e "${AMARILLO}Regenerando initramfs para aplicar cachyos-settings y ajustes del kernel...${NC}"
+dracut --force --regenerate-all
 
 # --- CIERRE ---
 echo -e "\n${AZUL}=====================================================${NC}"
