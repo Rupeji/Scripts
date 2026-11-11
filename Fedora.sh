@@ -49,7 +49,7 @@ dnf install -y https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-
 
 sudo dnf copr enable theblackdon/kwee -y
 sudo dnf copr enable bieszczaders/kernel-cachyos -y
-#sudo dnf install --nogpgcheck --repofrompath="terra,https://fyralabs.com\${releasever}" terra-release terra-gpg-keys -y
+sudo dnf copr enable bieszczaders/kernel-cachyos-addons -y
 sudo dnf install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release terra-gpg-keys -y
 
 # Paso 3: Instalación de tus aplicaciones del sistema
@@ -154,14 +154,29 @@ else
 fi
 rm -rf "$DIR_TMP_KINETIC"
 
-# Paso 5: Instalación del Kernel de CachyOS (Versión LGL Optimizada)
-echo -e "\n${VERDE}[5/8] Instalando Kernel de CachyOS optimizado...${NC}"
-dnf install -y kernel-cachyos
+# Paso 5: Instalación del Kernel de CachyOS y optimizaciones avanzadas (scx + ananicy)
+echo -e "\n${VERDE}[5/8] Instalando Kernel de CachyOS y planificadores de rendimiento...${NC}"
+dnf install -y kernel-cachyos cachyos-settings scx-scheds scx-tools ananicy-cpp cachyos-ananicy-rules
+
 if [ "$INSTALAR_NVIDIA" = true ]; then
     dnf install -y kernel-cachyos-devel-matched kernel-devel
 else
     dnf install -y kernel-cachyos-devel
 fi
+
+# Configurar scx_lavd como planificador predeterminado en modo rendimiento
+echo " -> Configurando planificador scx_lavd y servicio ananicy-cpp..."
+cat << 'EOF' > /etc/scx_loader.toml
+default_sched = "scx_lavd"
+default_mode = "Auto"
+
+[scheds.scx_lavd]
+auto_mode = ["--performance"]
+EOF
+
+# Activar servicios en segundo plano
+systemctl enable scx_loader.service
+systemctl enable ananicy-cpp.service
 
 # Paso 6: Instalación de aplicaciones de Gaming y Terra
 echo -e "\n${VERDE}[6/8] Instalando aplicaciones de juegos y comunicación...${NC}"
