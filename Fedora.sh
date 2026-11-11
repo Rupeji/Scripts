@@ -182,7 +182,8 @@ systemctl enable ananicy-cpp.service
 echo -e "\n${VERDE}[6/8] Instalando aplicaciones de juegos y comunicación...${NC}"
 dnf install -y discord protonplus steam mangohud gamescope
 dnf swap ffmpeg-free ffmpeg --allowerasing -y
-dnf update @multimedia --setopt="install_weak_deps=False" --exclude=PackageKit-gstreamer-plugin -y
+dnf install @multimedia --setopt="install_weak_deps=False" --exclude=PackageKit-gstreamer-plugin -y
+
 
 if [ "$INSTALAR_NVIDIA" = true ]; then
     echo " -> Instalando códecs completos y aceleración de vídeo NVIDIA..."
