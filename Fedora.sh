@@ -255,21 +255,27 @@ echo -e "${VERDE}¡Loadout finalizado con éxito! Ya puedes reiniciar con: sudo 
 #sudo dnf5 autoremove -y
 
 # --- VERIFICACIÓN POST-REINICIO ---
-# 1. Comprobar que arrancó con el Kernel de CachyOS (debe incluir 'cachyos' en el nombre):
+# 1. Comprobar que arrancó con el Kernel de CachyOS:
+# Muestra la versión del núcleo en uso y confirma que el gestor de arranque seleccionó CachyOS por defecto.
 # uname -r
 
-# 2. Verificar que el planificador scx_lavd está activo y corriendo:
+# 2. Verificar que el planificador scx_lavd está activo:
+# Devuelve el nombre del planificador sched_ext cargado en tiempo real (scx_lavd) y su modo de energía.
 # scxctl get
 
-# 3. Comprobar el estado del servicio de prioridades automáticas ananicy-cpp:
+# 3. Comprobar el estado del servicio ananicy-cpp:
+# Confirma que el demonio está activo (active running) gestionando prioridades de juegos y apps en segundo plano.
 # systemctl status ananicy-cpp --no-pager
 
 # 4. Verificar que el módulo NTSync del kernel está cargado:
+# Verifica que la sincronización nativa de Windows NT está lista en el núcleo para Steam/Proton.
 # lsmod | grep ntsync
 
-# 5. Comprobar el límite de memoria virtual (cachyos-settings lo sube a 1048576 o 2147483642):
+# 5. Comprobar el límite de memoria virtual:
+# Asegura que los ajustes de memoria de cachyos-settings (1048576 o 2147483642) se aplicaron en el arranque.
 # sysctl vm.max_map_count
 
 # 6. Verificar drivers y aceleración gráfica (solo si instalaste NVIDIA):
+# Confirman que tanto el controlador propietario como la aceleración de vídeo por hardware están operativos.
 # nvidia-smi
 # vainfo
