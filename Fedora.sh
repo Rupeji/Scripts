@@ -153,7 +153,7 @@ rm -rf "$DIR_TMP_KINETIC"
 echo -e "\n${VERDE}[5/8] Instalando Kernel de CachyOS optimizado...${NC}"
 dnf install -y kernel-cachyos
 if [ "$INSTALAR_NVIDIA" = true ]; then
-    dnf install -y kernel-cachyos-devel-matched
+    dnf install -y kernel-cachyos-devel-matched kernel-devel
 else
     dnf install -y kernel-cachyos-devel
 fi
@@ -203,7 +203,7 @@ if [ "$INSTALAR_NVIDIA" = true ]; then
     
     echo -e "${AMARILLO}Compilando módulo del kernel en primer plano (esto tardará unos minutos)...${NC}"
     akmods --force
-    dracut --force
+    dracut --force --regenerate-all
 else
     echo -e "\n${VERDE}[8/8] Omitiendo drivers de NVIDIA según tu selección.${NC}"
 fi
