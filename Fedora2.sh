@@ -41,7 +41,7 @@ dnf upgrade --refresh -y
 echo -e "\n${VERDE}[2/8] Configurando repositorios adicionales...${NC}"
 # Habilitar Flathub para aplicaciones Flatpak
 dnf install -y flatpak
-flatpak remote-add --if-not-exists flathub https://flathub.org
+flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 
 sudo dnf copr enable theblackdon/kwee -y
 sudo dnf copr enable bieszczaders/kernel-cachyos -y
