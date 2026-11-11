@@ -33,7 +33,8 @@ echo -e "              INICIANDO INSTALACIÓN                  "
 echo -e "${AZUL}=====================================================${NC}"
 
 # Paso 1: Actualización profunda (Fuerza la base antes de compilar nada)
-echo -e "\n${VERDE}[1/8] Actualizando los repositorios y el sistema...${NC}"
+echo -e "\n${VERDE}[1/8] Limpiando caché y actualizando los repositorios y el sistema...${NC}"
+dnf clean metadata
 dnf upgrade --refresh -y
 
 # Paso 2: Configuración de Repositorios
