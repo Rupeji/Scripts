@@ -253,3 +253,23 @@ echo -e "${VERDE}¡Loadout finalizado con éxito! Ya puedes reiniciar con: sudo 
 #sudo dnf distro-sync
 #sudo dnf update --refresh
 #sudo dnf5 autoremove -y
+
+# --- VERIFICACIÓN POST-REINICIO ---
+# 1. Comprobar que arrancó con el Kernel de CachyOS (debe incluir 'cachyos' en el nombre):
+# uname -r
+
+# 2. Verificar que el planificador scx_lavd está activo y corriendo:
+# scxctl get
+
+# 3. Comprobar el estado del servicio de prioridades automáticas ananicy-cpp:
+# systemctl status ananicy-cpp --no-pager
+
+# 4. Verificar que el módulo NTSync del kernel está cargado:
+# lsmod | grep ntsync
+
+# 5. Comprobar el límite de memoria virtual (cachyos-settings lo sube a 1048576 o 2147483642):
+# sysctl vm.max_map_count
+
+# 6. Verificar drivers y aceleración gráfica (solo si instalaste NVIDIA):
+# nvidia-smi
+# vainfo
