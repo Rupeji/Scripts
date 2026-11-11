@@ -172,23 +172,23 @@ URL_ASSETS_ESPACIOS="https://github .com /Rupeji /IconsWalls"
 URL_ASSETS_LIMPIA=$(echo "$URL_ASSETS_ESPACIOS" | tr -d ' ')
 
 if git clone --depth 1 "$URL_ASSETS_LIMPIA" "$DIR_TMP_WALLS"; then
-    mkdir -p /home/inhumano/Pictures
+    mkdir -p /home/inhumano/Imágenes
     mkdir -p /home/inhumano/.config/noctalia/activos
 
     if [ -d "$DIR_TMP_WALLS/Wallpapers" ]; then
         echo " -> Copiando carpeta Wallpapers a tu directorio Pictures..."
-        cp -r "$DIR_TMP_WALLS/Wallpapers" /home/inhumano/Pictures/
+        cp -r "$DIR_TMP_WALLS/Wallpapers" /home/inhumano/Imágenes/
     fi
 
     if [ -d "$DIR_TMP_WALLS/Iconos" ]; then
         echo " -> Copiando carpeta Iconos a tu directorio Pictures..."
-        cp -r "$DIR_TMP_WALLS/Iconos" /home/inhumano/Pictures/
+        cp -r "$DIR_TMP_WALLS/Iconos" /home/inhumano/Imágenes/
         
         echo " -> Inyectando logotipo personalizado del dock..."
         cp "$DIR_TMP_WALLS/Iconos/Bazzite_Logo.png" /home/inhumano/.config/noctalia/activos/ 2>/dev/null || true
     fi
     
-    chown -R inhumano:inhumano /home/inhumano/Pictures
+    chown -R inhumano:inhumano /home/inhumano/Imágenes
     chown -R inhumano:inhumano /home/inhumano/.config/noctalia
     echo "¡Carpetas de assets aplicadas a tu /home de forma correcta!"
 else
