@@ -20,7 +20,6 @@ echo -e "${AZUL}=====================================================${NC}"
 
 # Variables de selección estilo LGL
 INSTALAR_NVIDIA=false
-INSTALAR_CUDA=false
 
 # --- MENÚ DE SELECCIÓN DE HARDWARE ---
 echo -e "\n${AMARILLO}¿Deseas los drivers de NVIDIA a tu instalación? (s/n):${NC}"
@@ -43,7 +42,7 @@ sudo dnf copr enable theblackdon/kwee -y
 sudo dnf copr enable bieszczaders/kernel-cachyos -y
 #sudo dnf install --nogpgcheck --repofrompath="terra,https://fyralabs.com\${releasever}" terra-release terra-gpg-keys -y
 sudo dnf install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release terra-gpg-keys -y
-if [ "$INSTALAR_NVIDIA" = true ] || [ "$INSTALAR_CUDA" = true ]; then
+if [ "$INSTALAR_NVIDIA" = true ]; then
     echo -e "${AZUL}Habilitando RPM Fusion para soporte de NVIDIA...${NC}"
     dnf install -y https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm \
                    https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
@@ -215,6 +214,6 @@ echo -e "${VERDE}¡Loadout finalizado con éxito! Ya puedes reiniciar con: sudo 
 
 
 #Mantenimiento
-#sudo dnf ditro-sync
+#sudo dnf distro-sync
 #sudo dnf update --refresh
 #sudo dnf5 autoremove -y
