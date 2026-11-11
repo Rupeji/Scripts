@@ -204,6 +204,8 @@ if [ "$INSTALAR_NVIDIA" = true ]; then
     echo -e "${AMARILLO}Compilando módulo del kernel en primer plano (esto tardará unos minutos)...${NC}"
     akmods --force
     dracut --force
+else
+    echo -e "\n${VERDE}[8/8] Omitiendo drivers de NVIDIA según tu selección.${NC}"
 fi
 
 # --- CIERRE ---
