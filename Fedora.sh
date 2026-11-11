@@ -43,17 +43,14 @@ echo -e "\n${VERDE}[2/8] Configurando repositorios adicionales...${NC}"
 dnf install -y flatpak
 flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 
+echo -e "${AZUL}Habilitando RPM Fusion para soporte de NVIDIA...${NC}"
+dnf install -y https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm \
+               https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
+
 sudo dnf copr enable theblackdon/kwee -y
 sudo dnf copr enable bieszczaders/kernel-cachyos -y
 #sudo dnf install --nogpgcheck --repofrompath="terra,https://fyralabs.com\${releasever}" terra-release terra-gpg-keys -y
 sudo dnf install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release terra-gpg-keys -y
-if [ "$INSTALAR_NVIDIA" = true ]; then
-    echo -e "${AZUL}Habilitando RPM Fusion para soporte de NVIDIA...${NC}"
-    dnf install -y https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm \
-                   https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
-    # Habilitar AppStream metadata (Para que Discover/GNOME Software los reconozcan visualmente como hace LGL)
-    #dnf install -y rpmfusion-\*-appstream-data
-fi
 
 # Paso 3: Instalación de tus aplicaciones del sistema
 echo -e "\n${VERDE}[3/8] Instalando herramientas del sistema y utilidades...${NC}"
@@ -169,6 +166,13 @@ fi
 # Paso 6: Instalación de aplicaciones de Gaming y Terra
 echo -e "\n${VERDE}[6/8] Instalando aplicaciones de juegos y comunicación...${NC}"
 dnf install -y discord protonplus steam mangohud gamescope
+dnf swap ffmpeg-free ffmpeg --allowerasing -y
+dnf update @multimedia --setopt="install_weak_deps=False" --exclude=PackageKit-gstreamer-plugin -y
+
+if [ "$INSTALAR_NVIDIA" = true ]; then
+    echo " -> Instalando códecs completos y aceleración de vídeo NVIDIA..."
+    dnf install -y libva-nvidia-driver    
+fi
 
 # Paso 7: Clonar e inyectar activos globales en Pictures (Iconos y Wallpapers)
 echo -e "\n${VERDE}[7/8] Descargando activos estéticos externos (IconsWalls)...${NC}"
