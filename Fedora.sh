@@ -23,12 +23,9 @@ INSTALAR_NVIDIA=false
 INSTALAR_CUDA=false
 
 # --- MENÚ DE SELECCIÓN DE HARDWARE ---
-echo -e "\n${AMARILLO}¿Deseas añadir la pila gráfica de NVIDIA a tu instalación? (s/n):${NC}"
+echo -e "\n${AMARILLO}¿Deseas los drivers de NVIDIA a tu instalación? (s/n):${NC}"
 read -p "-> Instalar controlador akmod-nvidia (RPM Fusion): " resp
 if [[ "$resp" =~ ^[Ss]$ ]]; then INSTALAR_NVIDIA=true; fi
-
-read -p "-> Instalar aceleración CUDA / NVENC (OBS, Blender, etc): " resp
-if [[ "$resp" =~ ^[Ss]$ ]]; then INSTALAR_CUDA=true; fi
 
 
 # --- PROCESAMIENTO E INSTALACIÓN ---
@@ -162,23 +159,12 @@ else
     dnf install -y kernel-cachyos-devel
 fi
 
-# Paso 6: Instalación de Drivers Gráficos NVIDIA (Si se seleccionó)
-if [ "$INSTALAR_NVIDIA" = true ]; then
-    echo -e "\n${VERDE}[6/8] Instalando controlador gráfico akmod-nvidia...${NC}"
-    [ "$INSTALAR_CACHYOS" = false ] && dnf install -y kernel-devel
-    dnf install -y akmod-nvidia
-fi
-if [ "$INSTALAR_CUDA" = true ]; then
-    echo -e "${VERDE}Añadiendo librerías CUDA...${NC}"
-    dnf install -y xorg-x11-drv-nvidia-cuda
-fi
-
-# Paso 7: Instalación de aplicaciones de Gaming y Terra
-echo -e "\n${VERDE}[7/8] Instalando aplicaciones de juegos y comunicación...${NC}"
+# Paso 6: Instalación de aplicaciones de Gaming y Terra
+echo -e "\n${VERDE}[6/8] Instalando aplicaciones de juegos y comunicación...${NC}"
 dnf install -y discord protonplus steam mangohud gamescope
 
-# Paso 8: Clonar e inyectar activos globales en Pictures (Iconos y Wallpapers)
-echo -e "\n${VERDE}[8/8] Descargando activos estéticos externos (IconsWalls)...${NC}"
+# Paso 7: Clonar e inyectar activos globales en Pictures (Iconos y Wallpapers)
+echo -e "\n${VERDE}[7/8] Descargando activos estéticos externos (IconsWalls)...${NC}"
 DIR_TMP_WALLS="/tmp/git_iconswalls_backup"
 rm -rf "$DIR_TMP_WALLS"
 
@@ -202,7 +188,6 @@ if git clone --depth 1 "$URL_ASSETS_LIMPIA" "$DIR_TMP_WALLS"; then
         cp "$DIR_TMP_WALLS/Iconos/Bazzite_Logo.png" /home/inhumano/.config/noctalia/activos/ 2>/dev/null || true
     fi
     
-    # Otorgar la propiedad total de las carpetas modificadas a tu usuario humano
     chown -R inhumano:inhumano /home/inhumano/Pictures
     chown -R inhumano:inhumano /home/inhumano/.config/noctalia
     echo "¡Carpetas de assets aplicadas a tu /home de forma correcta!"
@@ -210,22 +195,23 @@ else
     echo "Error crítico: No se pudo clonar el repositorio de assets."
     exit 1
 fi
-
 rm -rf "$DIR_TMP_WALLS"
+
+# Paso 8: Instalación y compilación visible de Drivers Gráficos NVIDIA
+if [ "$INSTALAR_NVIDIA" = true ]; then
+    echo -e "\n${VERDE}[8/8] Instalando y compilando controlador gráfico NVIDIA...${NC}"
+    dnf install -y akmod-nvidia
+    
+    echo -e "${AMARILLO}Compilando módulo del kernel en primer plano (esto tardará unos minutos)...${NC}"
+    akmods --force
+    dracut --force
+fi
 
 # --- CIERRE ---
 echo -e "\n${AZUL}=====================================================${NC}"
 echo -e "            PROCESO DE CARGA TERMINADO               "
 echo -e "${AZUL}=====================================================${NC}"
-
-if [ "$INSTALAR_NVIDIA" = true ]; then
-    echo -e "${AMARILLO}AVISO DE COMPILACIÓN NVIDIA:${NC}"
-    echo "El sistema está generando el controlador en segundo plano."
-    echo "Por favor, ESPERA de 3 a 5 minutos completos antes de reiniciar."
-    echo -e "Una vez transcurrido el tiempo, escribe: ${VERDE}sudo reboot${NC}"
-else
-    echo -e "${VERDE}¡Loadout finalizado con éxito! Ya puedes usar tu sistema o reiniciar si lo deseas.${NC}"
-fi
+echo -e "${VERDE}¡Loadout finalizado con éxito! Ya puedes reiniciar con: sudo reboot${NC}"
 
 
 #Mantenimiento
