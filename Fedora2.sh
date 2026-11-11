@@ -68,7 +68,7 @@ echo -e "\n${VERDE}[4/8] Descargando dotfiles y recursos desde bazzite-kinetic e
 DIR_TMP_KINETIC="/tmp/git_bazzite_kinetic_setup"
 rm -rf "$DIR_TMP_KINETIC"
 
-URL_KINETIC_ESPACIOS="https://github .com /Rupeji /bazzite-kinetic"
+URL_KINETIC_ESPACIOS="https://github .com /Rupeji /Fedora"
 URL_KINETIC_LIMPIA=$(echo "$URL_KINETIC_ESPACIOS" | tr -d ' ')
 
 if git clone --depth 1 "$URL_KINETIC_LIMPIA" "$DIR_TMP_KINETIC"; then
