@@ -244,7 +244,11 @@ dracut --force --regenerate-all
 echo -e "\n${AZUL}=====================================================${NC}"
 echo -e "            PROCESO DE CARGA TERMINADO               "
 echo -e "${AZUL}=====================================================${NC}"
-echo -e "${VERDE}¡Loadout finalizado con éxito! Ya puedes reiniciar con: sudo reboot${NC}"
+echo -e "${VERDE} Recuerda hacer gsettings set org.cinnamon.desktop.default-applications.terminal exec 'kitty' al loguear en Kineticwe ! Ya puedes reiniciar con: sudo reboot${NC}"
+
+
+
+# gsettings set org.cinnamon.desktop.default-applications.terminal exec 'kitty'
 
 
 #Mantenimiento
