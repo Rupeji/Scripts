@@ -236,7 +236,7 @@ if [ "$INSTALAR_NVIDIA" = true ]; then
     echo -e "${AMARILLO}Compilando módulo gráfico de NVIDIA (esto tardará unos minutos)...${NC}"
     akmods --force
 else
-    echo " -> Omitiendo drivers propietarios de NVIDIA (usando drivers open-source Mesa/kernel)."
+    echo " -> Omitiendo drivers de NVIDIA según tu selección."
 fi
 
 echo -e "${AMARILLO}Regenerando initramfs para aplicar cachyos-settings y ajustes del kernel...${NC}"
