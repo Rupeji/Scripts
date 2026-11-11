@@ -39,6 +39,10 @@ dnf upgrade --refresh -y
 
 # Paso 2: Configuración de Repositorios
 echo -e "\n${VERDE}[2/8] Configurando repositorios adicionales...${NC}"
+# Habilitar Flathub para aplicaciones Flatpak
+dnf install -y flatpak
+flatpak remote-add --if-not-exists flathub https://flathub.org
+
 sudo dnf copr enable theblackdon/kwee -y
 sudo dnf copr enable bieszczaders/kernel-cachyos -y
 #sudo dnf install --nogpgcheck --repofrompath="terra,https://fyralabs.com\${releasever}" terra-release terra-gpg-keys -y
@@ -54,6 +58,9 @@ fi
 # Paso 3: Instalación de tus aplicaciones del sistema
 echo -e "\n${VERDE}[3/8] Instalando herramientas del sistema y utilidades...${NC}"
 dnf5 install kineticwe kineticwe-greeter firefox fastfetch kitty fish loupe gnome-text-editor mediawriter nemo nemo-fileroller git tar -y
+# Instalar Bambu Studio desde Flathub
+echo " -> Instalando Bambu Studio (Flatpak)..."
+flatpak install -y flathub com.bambulab.BambuStudio
 dnf remove alacritty -y
 
 # Paso 4: Clonar temporalmente tu repositorio bazzite-kinetic para extraer dotfiles/recursos
