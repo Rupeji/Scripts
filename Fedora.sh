@@ -225,8 +225,8 @@ else
 fi
 rm -rf "$DIR_TMP_WALLS"
 
-# Paso 8: Instalación de Drivers NVIDIA (opcional) y reconstrucción de initramfs
-echo -e "\n${VERDE}[8/8] Finalizando configuración del kernel y drivers gráficos...${NC}"
+# Paso 8: Instalación de Drivers NVIDIA (opcional), Flatpak y reconstrucción de initramfs
+echo -e "\n${VERDE}[8/8] Finalizando configuración del kernel, drivers gráficos y Bambu Studio...${NC}"
 
 if [ "$INSTALAR_NVIDIA" = true ]; then
     echo " -> Instalando controlador gráfico NVIDIA..."
@@ -237,6 +237,10 @@ if [ "$INSTALAR_NVIDIA" = true ]; then
 else
     echo " -> Omitiendo drivers de NVIDIA según tu selección."
 fi
+
+echo " -> Instalando Bambu Studio y sincronizando runtimes gráficos en Flatpak..."
+flatpak install -y flathub com.bambulab.BambuStudio
+flatpak update -y
 
 echo -e "${AMARILLO}Regenerando initramfs para aplicar cachyos-settings y ajustes del kernel...${NC}"
 dracut --force --regenerate-all
