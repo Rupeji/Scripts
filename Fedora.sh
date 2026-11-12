@@ -58,6 +58,7 @@ dnf5 install kineticwe kineticwe-greeter firefox fastfetch kitty fish loupe gnom
 # Instalar Bambu Studio desde Flathub
 echo " -> Instalando Bambu Studio (Flatpak)..."
 flatpak install -y flathub com.bambulab.BambuStudio
+flatpak override --system --env=WEBKIT_DISABLE_DMABUF_RENDERER=1 --env=WEBKIT_DISABLE_COMPOSITING_MODE=1 com.bambulab.BambuStudio
 dnf remove alacritty -y
 
 # Paso 4: Clonar temporalmente tu repositorio bazzite-kinetic para extraer dotfiles/recursos
