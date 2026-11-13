@@ -44,12 +44,6 @@ dnf install -y flatpak
 flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 
 echo -e "${AZUL}Habilitando RPM Fusion para soporte de NVIDIA...${NC}"
-FEDORA_VER=$(rpm -E %fedora)
-if grep -qi "rawhide" /etc/os-release; then
-    RPMFUSION_TAG="rawhide"
-else
-    RPMFUSION_TAG="$FEDORA_VER"
-fi
 dnf install -y https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm \
                https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
 
