@@ -233,6 +233,7 @@ echo -e "\n${VERDE}[8/8] Finalizando configuración del kernel, drivers gráfico
 if [ "$INSTALAR_NVIDIA" = true ]; then
     echo " -> Instalando controlador gráfico NVIDIA..."
     dnf install -y akmod-nvidia
+    dnf install -y akmod-nvidia xorg-x11-drv-nvidia-cuda libva-utils
     
     echo -e "${AMARILLO}Compilando módulo gráfico de NVIDIA (esto tardará unos minutos)...${NC}"
     akmods --force
