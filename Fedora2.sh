@@ -161,7 +161,9 @@ rm -rf "$DIR_TMP_KINETIC"
 
 # Paso 5: Instalación del Kernel de CachyOS y optimizaciones avanzadas (scx + ananicy)
 echo -e "\n${VERDE}[5/8] Instalando Kernel de CachyOS y planificadores de rendimiento...${NC}"
-dnf install -y kernel-cachyos cachyos-settings scx-scheds scx-tools ananicy-cpp cachyos-ananicy-rules
+dnf install -y kernel-cachyos cachyos-settings
+dnf install -y scx-scheds scx-tools
+dnf install -y ananicy-cpp cachyos-ananicy-rules
 
 if [ "$INSTALAR_NVIDIA" = true ]; then
     dnf install -y kernel-cachyos-devel-matched kernel-devel
