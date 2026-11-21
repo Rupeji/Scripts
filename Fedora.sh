@@ -169,14 +169,12 @@ else
     dnf install -y kernel-cachyos-devel
 fi
 
-# Configurar scx_lavd como planificador predeterminado en modo rendimiento
+# Configurar scx_lavd en la ruta nueva (/etc/scx_loader/config.toml) en modo Gaming
 echo " -> Configurando planificador scx_lavd y servicio ananicy-cpp..."
-cat << 'EOF' > /etc/scx_loader.toml
+mkdir -p /etc/scx_loader
+cat << 'EOF' > /etc/scx_loader/config.toml
 default_sched = "scx_lavd"
-default_mode = "Auto"
-
-[scheds.scx_lavd]
-auto_mode = ["--performance"]
+default_mode = "Gaming"
 EOF
 
 # Activar servicios en segundo plano
