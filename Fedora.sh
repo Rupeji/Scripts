@@ -306,3 +306,6 @@ echo -e "${VERDE} Recuerda hacer gsettings set org.cinnamon.desktop.default-appl
 # Confirman que tanto el controlador propietario como la aceleración de vídeo por hardware están operativos.
 # nvidia-smi
 # vainfo
+# 
+# No instales ni uses gamemode.
+# Como ya tienes scx_lavd activo en modo Gaming (y ananicy-cpp), evita usar gamemoderun para que no choquen entre sí intentando gestionar los mismos núcleos de tu CPU.
