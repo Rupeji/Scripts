@@ -100,13 +100,13 @@ if git clone --depth 1 "$URL_KINETIC_LIMPIA" "$DIR_TMP_KINETIC"; then
         [ -d "$DIR_DOTFILES_ORIGEN/qt5ct" ] && cp -r "$DIR_DOTFILES_ORIGEN/qt5ct"/* "$USER_HOME/.config/qt5ct/" 2>/dev/null || true
         [ -d "$DIR_DOTFILES_ORIGEN/qt6ct" ] && cp -r "$DIR_DOTFILES_ORIGEN/qt6ct"/* "$USER_HOME/.config/qt6ct/" 2>/dev/null || true
 
-        # Configurar portales para evitar timeout de 6s en notificaciones de KineticWE
+        # Configurar portales para KineticWE evitando timeouts de 6s en D-Bus
         mkdir -p "$USER_HOME/.config/xdg-desktop-portal"
-        cat << 'EOF' > "$USER_HOME/.config/xdg-desktop-portal/portals.conf"
+        cat << 'EOF' > "$USER_HOME/.config/xdg-desktop-portal/kineticwe-portals.conf"
 [preferred]
-default=kwe;gtk
-org.freedesktop.impl.portal.Notification=gtk
+default=gtk
 EOF
+        cp "$USER_HOME/.config/xdg-desktop-portal/kineticwe-portals.conf" "$USER_HOME/.config/xdg-desktop-portal/portals.conf"
 
         # Corregir permisos para tu usuario en .config
         chown -R inhumano:inhumano "$USER_HOME/.config"
