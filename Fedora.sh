@@ -181,6 +181,20 @@ EOF
 systemctl enable scx_loader.service
 systemctl enable ananicy-cpp.service
 
+# Optimización de ZRAM y gestión de memoria estilo Bazzite/SteamOS
+echo " -> Configurando ZRAM (zstd a 16GB) y parámetros de memoria..."
+cat << 'EOF' > /etc/systemd/zram-generator.conf
+[zram0]
+zram-size = min(ram, 16384)
+compression-algorithm = zstd
+EOF
+
+cat << 'EOF' > /etc/sysctl.d/99-bazzite-memory.conf
+vm.swappiness = 150
+vm.page-cluster = 0
+vm.vfs_cache_pressure = 50
+EOF
+
 # Paso 6: Instalación de aplicaciones de Gaming y Terra
 echo -e "\n${VERDE}[6/8] Instalando aplicaciones de juegos y comunicación...${NC}"
 dnf install -y discord protonplus steam mangohud gamescope
