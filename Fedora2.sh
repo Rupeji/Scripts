@@ -51,6 +51,7 @@ sudo dnf copr enable theblackdon/kwee -y
 sudo dnf copr enable bieszczaders/kernel-cachyos -y
 sudo dnf copr enable bieszczaders/kernel-cachyos-addons -y
 sudo dnf install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release terra-gpg-keys -y
+dnf makecache --refresh
 
 # Paso 3: Instalación de tus aplicaciones del sistema
 echo -e "\n${VERDE}[3/8] Instalando herramientas del sistema y utilidades...${NC}"
