@@ -249,11 +249,11 @@ echo -e "\n${VERDE}[8/8] Finalizando configuración del kernel, drivers gráfico
 
 if [ "$INSTALAR_NVIDIA" = true ]; then
     echo " -> Instalando controlador gráfico NVIDIA..."
-    dnf install -y akmod-nvidia
     dnf install -y akmod-nvidia xorg-x11-drv-nvidia-cuda libva-utils
-    
-    echo -e "${AMARILLO}Compilando módulo gráfico de NVIDIA (esto tardará unos minutos)...${NC}"
-    akmods --force
+
+    echo -e "${AMARILLO}Compilando módulo gráfico de NVIDIA para CachyOS...${NC}"
+    KERNEL_CACHY=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}\n" kernel-cachyos-core | sort -V | tail -n 1)
+    akmods --force --kernels "$KERNEL_CACHY"
 else
     echo " -> Omitiendo drivers de NVIDIA según tu selección."
 fi
