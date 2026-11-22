@@ -197,6 +197,7 @@ vm.swappiness = 150
 vm.page-cluster = 0
 vm.vfs_cache_pressure = 50
 EOF
+sysctl --system >/dev/null
 
 # Paso 6: Instalación de aplicaciones de Gaming y Terra
 echo -e "\n${VERDE}[6/8] Instalando aplicaciones de juegos y comunicación...${NC}"
