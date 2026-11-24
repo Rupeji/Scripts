@@ -55,7 +55,7 @@ dnf makecache --refresh
 
 # Paso 3: Instalación de tus aplicaciones del sistema
 echo -e "\n${VERDE}[3/8] Instalando herramientas del sistema y utilidades...${NC}"
-dnf5 install kineticwe kineticwe-greeter firefox fastfetch kitty fish loupe gnome-text-editor mediawriter nemo nemo-fileroller git tar -y
+dnf5 install kineticwe kineticwe-greeter firefox fastfetch kitty fish loupe gnome-text-editor mediawriter luciole 7zip git tar -y
 dnf remove alacritty -y
 
 # Paso 4: Clonar temporalmente tu repositorio bazzite-kinetic para extraer dotfiles/recursos
