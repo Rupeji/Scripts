@@ -87,7 +87,7 @@ if git clone --depth 1 "$URL_KINETIC_LIMPIA" "$DIR_TMP_KINETIC"; then
     # --- INYECTAR DIRECTAMENTE EN TU HOME ---
     if [ -d "$DIR_DOTFILES_ORIGEN" ]; then
         echo " -> Desplegando quirúrgicamente dotfiles en tu HOME ($USER_HOME)..."
-        mkdir -p "$USER_HOME/.config"/{kitty,fish,kineticwe,niri,noctalia-kwe,gtk-3.0,gtk-4.0,qt5ct,qt6ct}
+        mkdir -p "$USER_HOME/.config"/{kitty,fish,kineticwe,niri,noctalia-kwe,luciole,gtk-3.0,gtk-4.0,qt5ct,qt6ct}
 
         [ -f "$DIR_DOTFILES_ORIGEN/kitty/kitty.conf" ] && cp "$DIR_DOTFILES_ORIGEN/kitty/kitty.conf" "$USER_HOME/.config/kitty/kitty.conf"
         [ -f "$DIR_DOTFILES_ORIGEN/fish/config.fish" ] && cp "$DIR_DOTFILES_ORIGEN/fish/config.fish" "$USER_HOME/.config/fish/config.fish"
@@ -96,6 +96,7 @@ if git clone --depth 1 "$URL_KINETIC_LIMPIA" "$DIR_TMP_KINETIC"; then
         [ -d "$DIR_DOTFILES_ORIGEN/kineticwe" ] && cp -r "$DIR_DOTFILES_ORIGEN/kineticwe"/* "$USER_HOME/.config/kineticwe/" 2>/dev/null || true
         [ -d "$DIR_DOTFILES_ORIGEN/niri" ] && cp -r "$DIR_DOTFILES_ORIGEN/niri"/* "$USER_HOME/.config/niri/" 2>/dev/null || true
         [ -d "$DIR_DOTFILES_ORIGEN/noctalia-kwe" ] && cp -r "$DIR_DOTFILES_ORIGEN/noctalia-kwe"/* "$USER_HOME/.config/noctalia-kwe/" 2>/dev/null || true
+        [ -d "$DIR_DOTFILES_ORIGEN/luciole" ] && cp -r "$DIR_DOTFILES_ORIGEN/luciole"/* "$USER_HOME/.config/luciole/" 2>/dev/null || true
         [ -d "$DIR_DOTFILES_ORIGEN/gtk-3.0" ] && cp -r "$DIR_DOTFILES_ORIGEN/gtk-3.0"/* "$USER_HOME/.config/gtk-3.0/" 2>/dev/null || true
         [ -d "$DIR_DOTFILES_ORIGEN/gtk-4.0" ] && cp -r "$DIR_DOTFILES_ORIGEN/gtk-4.0"/* "$USER_HOME/.config/gtk-4.0/" 2>/dev/null || true
         [ -d "$DIR_DOTFILES_ORIGEN/qt5ct" ] && cp -r "$DIR_DOTFILES_ORIGEN/qt5ct"/* "$USER_HOME/.config/qt5ct/" 2>/dev/null || true
