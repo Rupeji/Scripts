@@ -274,7 +274,6 @@ echo -e "${VERDE} Recuerda hacer gsettings set org.cinnamon.desktop.default-appl
 
 
 
-# gsettings set org.cinnamon.desktop.default-applications.terminal exec 'kitty'
 
 
 #Mantenimiento
