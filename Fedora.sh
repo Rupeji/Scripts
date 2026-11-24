@@ -200,6 +200,11 @@ vm.vfs_cache_pressure = 50
 EOF
 sysctl --system >/dev/null
 
+# Bloquear futuras actualizaciones del kernel stock de Fedora
+if ! grep -q "^exclude=kernel " /etc/dnf/dnf.conf; then
+    echo "exclude=kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra kernel-devel" >> /etc/dnf/dnf.conf
+fi
+
 # Paso 6: Instalación de aplicaciones de Gaming y Terra
 echo -e "\n${VERDE}[6/8] Instalando aplicaciones de juegos y comunicación...${NC}"
 dnf install -y discord protonplus steam mangohud gamescope
@@ -281,6 +286,8 @@ echo -e "${VERDE} Recuerda hacer gsettings set org.cinnamon.desktop.default-appl
 #sudo dnf distro-sync
 #sudo dnf update --refresh
 #sudo dnf5 autoremove -y
+
+# Borrar kernels de FEDORA sudo dnf remove kernel-core kernel-modules kernel-modules-core kernel-modules-extra kernel-devel -y
 
 # --- VERIFICACIÓN POST-REINICIO ---
 # 1. Comprobar que arrancó con el Kernel de CachyOS:
