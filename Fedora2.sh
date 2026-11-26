@@ -236,7 +236,7 @@ fi
 
 if [ "$PERFIL_CPU" = "amd" ]; then
     echo " -> Instalando microcódigo AMD y tuned..."
-    dnf install -y amd-ucode tuned
+    dnf install -y linux-firmware tuned
     systemctl enable --now tuned
     tuned-adm profile latency-performance || true
 fi
@@ -336,10 +336,11 @@ if command -v akmods &>/dev/null; then
     KERNEL_CACHY=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}\n" kernel-cachyos-core 2>/dev/null | sort -V | tail -n 1)
     if [ -n "$KERNEL_CACHY" ]; then
         akmods --force --kernels "$KERNEL_CACHY"
+        dracut --force --kver "$KERNEL_CACHY"
     else
         akmods --force
+        dracut --force
     fi
-    dracut --force
 fi
 
 echo "-> Limpiando kernels antiguos..."
