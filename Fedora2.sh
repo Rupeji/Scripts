@@ -294,8 +294,10 @@ echo " -> Instalando Bambu Studio y sincronizando Flatpak..."
 flatpak install -y flathub com.bambulab.BambuStudio
 flatpak update -y
 
-echo " -> Regenerando initramfs en modo hostonly..."
-dracut --force --hostonly --kver "$(uname -r)"
+echo " -> Regenerando initramfs en modo hostonly para CachyOS..."
+# [FIX] Obtener la versión exacta del kernel de CachyOS instalado, no el de Fedora
+KERNEL_CACHY=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}\n" kernel-cachyos-core | sort -V | tail -n 1)
+dracut --force --hostonly --kver "$KERNEL_CACHY"
 
 echo " -> Reduciendo GRUB_TIMEOUT a 2 segundos..."
 sed -i 's/^GRUB_TIMEOUT=.*/GRUB_TIMEOUT=2/' /etc/default/grub
@@ -308,23 +310,6 @@ grub2-mkconfig -o /boot/grub2/grub.cfg
 # Paso 9: Automatización y Red de Seguridad
 echo -e "\n${VERDE}[9/10] Configurando automatizaciones de mantenimiento...${NC}"
 
-# 1. Hook automático de kernel (solo si es NVIDIA)
-if [ "$INSTALAR_NVIDIA" = true ]; then
-    echo " -> Configurando hook automático para futuros kernels (NVIDIA)..."
-    cat << 'EOF' > /etc/kernel/install.d/99-akmods-dracut.install
-#!/usr/bin/bash
-COMMAND="$1"
-KERNEL_VERSION="$2"
-
-if [[ "$COMMAND" == "add" ]]; then
-    echo "Recompilando módulos de NVIDIA para el kernel $KERNEL_VERSION..."
-    /usr/sbin/akmods --force --kernels "$KERNEL_VERSION"
-    echo "Regenerando initramfs para el kernel $KERNEL_VERSION..."
-    /usr/sbin/dracut --force --kver "$KERNEL_VERSION"
-fi
-EOF
-    chmod +x /etc/kernel/install.d/99-akmods-dracut.install
-fi
 
 # 2. Snapper para snapshots automáticos (BTRFS)
 echo " -> Configurando Snapper para snapshots de BTRFS..."
@@ -347,7 +332,13 @@ flatpak update -y
 
 if command -v akmods &>/dev/null; then
     echo "-> Verificando módulos de NVIDIA..."
-    akmods --force
+    # [FIX] Compilar explícitamente para el kernel de CachyOS más reciente
+    KERNEL_CACHY=$(rpm -q --qf "%{VERSION}-%{RELEASE}.%{ARCH}\n" kernel-cachyos-core 2>/dev/null | sort -V | tail -n 1)
+    if [ -n "$KERNEL_CACHY" ]; then
+        akmods --force --kernels "$KERNEL_CACHY"
+    else
+        akmods --force
+    fi
     dracut --force
 fi
 
