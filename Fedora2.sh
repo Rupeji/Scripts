@@ -170,7 +170,10 @@ rm -rf "$DIR_TMP_KINETIC"
 
 # Paso 5: Kernel CachyOS y optimizaciones
 echo -e "\n${VERDE}[5/10] Instalando Kernel de CachyOS y optimizaciones...${NC}"
-dnf install -y kernel-cachyos cachyos-settings
+#dnf install -y kernel-cachyos cachyos-settings
+# [FIX] Resolver conflicto de ZRAM antes de instalar cachyos-settings
+dnf swap zram-generator-defaults cachyos-settings -y
+dnf install -y kernel-cachyos
 dnf install -y scx-scheds scx-tools
 dnf install -y ananicy-cpp cachyos-ananicy-rules
 
