@@ -52,12 +52,12 @@ echo -e "              INICIANDO INSTALACIÓN                  "
 echo -e "${AZUL}=====================================================${NC}"
 
 # Paso 1: Actualización profunda
-echo -e "\n${VERDE}[1/9] Limpiando caché y actualizando el sistema...${NC}"
+echo -e "\n${VERDE}[1/10] Limpiando caché y actualizando el sistema...${NC}"
 dnf clean metadata
 dnf upgrade --refresh -y
 
 # Paso 2: Configuración de Repositorios
-echo -e "\n${VERDE}[2/9] Configurando repositorios adicionales...${NC}"
+echo -e "\n${VERDE}[2/10] Configurando repositorios adicionales...${NC}"
 dnf install -y flatpak
 flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 
@@ -72,12 +72,12 @@ dnf install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$
 dnf makecache --refresh
 
 # Paso 3: Aplicaciones base
-echo -e "\n${VERDE}[3/9] Instalando herramientas del sistema...${NC}"
+echo -e "\n${VERDE}[3/10] Instalando herramientas del sistema...${NC}"
 dnf5 install kineticwe kineticwe-greeter firefox fastfetch kitty fish loupe gnome-text-editor mediawriter luciole 7zip git tar -y
 dnf remove alacritty -y
 
 # Paso 4: Dotfiles y recursos
-echo -e "\n${VERDE}[4/9] Descargando dotfiles y recursos...${NC}"
+echo -e "\n${VERDE}[4/10] Descargando dotfiles y recursos...${NC}"
 DIR_TMP_KINETIC="/tmp/git_bazzite_kinetic_setup"
 rm -rf "$DIR_TMP_KINETIC"
 
@@ -169,7 +169,7 @@ fi
 rm -rf "$DIR_TMP_KINETIC"
 
 # Paso 5: Kernel CachyOS y optimizaciones
-echo -e "\n${VERDE}[5/9] Instalando Kernel de CachyOS y optimizaciones...${NC}"
+echo -e "\n${VERDE}[5/10] Instalando Kernel de CachyOS y optimizaciones...${NC}"
 dnf install -y kernel-cachyos cachyos-settings
 dnf install -y scx-scheds scx-tools
 dnf install -y ananicy-cpp cachyos-ananicy-rules
@@ -225,25 +225,21 @@ systemctl daemon-reload
 systemctl enable thp-tweaks.service
 sysctl --system >/dev/null
 
-# Deshabilitar NetworkManager-wait-online (no bloquea, pero limpia)
 systemctl disable NetworkManager-wait-online.service 2>/dev/null || true
 
-# Bloquear kernel stock de Fedora
 if ! grep -q "^exclude=kernel " /etc/dnf/dnf.conf; then
     echo "exclude=kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra kernel-devel" >> /etc/dnf/dnf.conf
 fi
 
-# Optimizaciones específicas para perfil AMD (CPU)
 if [ "$PERFIL_CPU" = "amd" ]; then
     echo " -> Instalando microcódigo AMD y tuned..."
     dnf install -y amd-ucode tuned
     systemctl enable --now tuned
-    # Perfil de latencia para gaming (válido tanto para 5900X como para Ryzen AMD GPU)
     tuned-adm profile latency-performance || true
 fi
 
 # Paso 6: Aplicaciones de Gaming
-echo -e "\n${VERDE}[6/9] Instalando aplicaciones de juegos...${NC}"
+echo -e "\n${VERDE}[6/10] Instalando aplicaciones de juegos...${NC}"
 dnf install -y discord protonplus steam mangohud gamescope
 dnf swap ffmpeg-free ffmpeg --allowerasing -y
 dnf install @multimedia --setopt="install_weak_deps=False" --exclude=PackageKit-gstreamer-plugin -y
@@ -252,7 +248,7 @@ echo " -> Instalando drivers gráficos del perfil seleccionado..."
 dnf install -y $PAQUETES_GRAFICOS
 
 # Paso 7: Activos estéticos
-echo -e "\n${VERDE}[7/9] Descargando activos estéticos (IconsWalls)...${NC}"
+echo -e "\n${VERDE}[7/10] Descargando activos estéticos (IconsWalls)...${NC}"
 DIR_TMP_WALLS="/tmp/git_iconswalls_backup"
 rm -rf "$DIR_TMP_WALLS"
 
@@ -281,7 +277,7 @@ fi
 rm -rf "$DIR_TMP_WALLS"
 
 # Paso 8: Drivers NVIDIA (solo perfil 1), Flatpak e initramfs
-echo -e "\n${VERDE}[8/9] Finalizando kernel, drivers y Bambu Studio...${NC}"
+echo -e "\n${VERDE}[8/10] Finalizando kernel, drivers y Bambu Studio...${NC}"
 
 if [ "$INSTALAR_NVIDIA" = true ]; then
     echo " -> Compilando módulo NVIDIA para CachyOS..."
@@ -302,8 +298,69 @@ echo " -> Reduciendo GRUB_TIMEOUT a 2 segundos..."
 sed -i 's/^GRUB_TIMEOUT=.*/GRUB_TIMEOUT=2/' /etc/default/grub
 grub2-mkconfig -o /boot/grub2/grub.cfg
 
-# Paso 9: Diagnóstico
-echo -e "\n${VERDE}[9/9] Diagnóstico de arranque...${NC}"
+# ============================================================
+# NUEVOS PASOS DE AUTOMATIZACIÓN Y MANTENIMIENTO
+# ============================================================
+
+# Paso 9: Automatización y Red de Seguridad
+echo -e "\n${VERDE}[9/10] Configurando automatizaciones de mantenimiento...${NC}"
+
+# 1. Hook automático de kernel (solo si es NVIDIA)
+if [ "$INSTALAR_NVIDIA" = true ]; then
+    echo " -> Configurando hook automático para futuros kernels (NVIDIA)..."
+    cat << 'EOF' > /etc/kernel/install.d/99-akmods-dracut.install
+#!/usr/bin/bash
+COMMAND="$1"
+KERNEL_VERSION="$2"
+
+if [[ "$COMMAND" == "add" ]]; then
+    echo "Recompilando módulos de NVIDIA para el kernel $KERNEL_VERSION..."
+    /usr/sbin/akmods --force --kernels "$KERNEL_VERSION"
+    echo "Regenerando initramfs para el kernel $KERNEL_VERSION..."
+    /usr/sbin/dracut --force --kver "$KERNEL_VERSION"
+fi
+EOF
+    chmod +x /etc/kernel/install.d/99-akmods-dracut.install
+fi
+
+# 2. Snapper para snapshots automáticos (BTRFS)
+echo " -> Configurando Snapper para snapshots de BTRFS..."
+dnf install -y snapper python3-dnf-plugin-snapper
+snapper -c root create-config / 2>/dev/null || true
+systemctl enable --now snapper-timeline.timer
+systemctl enable --now snapper-cleanup.timer
+
+# 3. Script de mantenimiento manual
+echo " -> Creando script de mantenimiento en /usr/local/bin/mantenimiento..."
+cat << 'EOF' > /usr/local/bin/mantenimiento
+#!/bin/bash
+echo "=== Iniciando mantenimiento del sistema ==="
+
+echo "-> Actualizando Fedora..."
+dnf upgrade --refresh -y
+
+echo "-> Actualizando Flatpaks..."
+flatpak update -y
+
+if command -v akmods &>/dev/null; then
+    echo "-> Verificando módulos de NVIDIA..."
+    akmods --force
+    dracut --force
+fi
+
+echo "-> Limpiando kernels antiguos..."
+dnf remove --oldinstallonly --setopt installonly_limit=2 kernel-cachyos kernel-cachyos-core kernel-cachyos-modules -y 2>/dev/null || true
+dnf autoremove -y
+
+echo "-> Limpiando caché..."
+dnf clean all
+
+echo "=== Mantenimiento completado ==="
+EOF
+chmod +x /usr/local/bin/mantenimiento
+
+# Paso 10: Diagnóstico
+echo -e "\n${VERDE}[10/10] Diagnóstico de arranque...${NC}"
 systemd-analyze
 echo -e "\n${AZUL}Servicios más lentos (top 10):${NC}"
 systemd-analyze blame | head -n 10
