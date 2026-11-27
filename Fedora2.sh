@@ -230,6 +230,10 @@ systemctl enable thp-tweaks.service
 sysctl --system >/dev/null
 
 systemctl disable NetworkManager-wait-online.service 2>/dev/null || true
+# [MEJORA] Deshabilitar servicios innecesarios para un equipo de escritorio/gaming
+echo " -> Deshabilitando servicios innecesarios (iSCSI, Avahi)..."
+systemctl disable iscsi-onboot.service iscsi-starter.service 2>/dev/null || true
+systemctl disable avahi-daemon.service avahi-daemon.socket 2>/dev/null || true
 
 if ! grep -q "^exclude=kernel " /etc/dnf/dnf.conf; then
     echo "exclude=kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra kernel-devel" >> /etc/dnf/dnf.conf
