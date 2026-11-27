@@ -69,11 +69,12 @@ dnf copr enable theblackdon/kwee -y
 dnf copr enable bieszczaders/kernel-cachyos -y
 dnf copr enable bieszczaders/kernel-cachyos-addons -y
 #dnf install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release terra-gpg-keys -y
+dnf copr enable lemmy/favorites -y
 dnf makecache --refresh
 
 # Paso 3: Aplicaciones base
 echo -e "\n${VERDE}[3/10] Instalando herramientas del sistema...${NC}"
-dnf5 install kineticwe kineticwe-greeter firefox fastfetch kitty fish loupe gnome-text-editor mediawriter luciole 7zip git tar -y
+dnf5 install kineticwe kineticwe-greeter firefox fastfetch kitty fish loupe gnome-text-editor mediawriter luciole-git 7zip git tar -y
 dnf remove alacritty -y
 
 # Paso 4: Dotfiles y recursos
